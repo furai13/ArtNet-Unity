@@ -12,5 +12,10 @@ namespace ArtNet.Devices.Modular
         public float BeamAngleNormalized = 0.5f;
         public bool StrobeEnabled;
         public float StrobeRateHz;
+        public bool GoboOpen = true;
+        public int GoboIndex;
+        public bool GoboRotate;
+        public float GoboRotationSpeedDegPerSecond;
+        public float GoboRotationAngle;
     }
 }
