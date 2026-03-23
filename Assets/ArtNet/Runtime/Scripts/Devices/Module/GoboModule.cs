@@ -28,7 +28,7 @@ namespace ArtNet.Devices.Modular
 
         private void ApplySelection(in DmxFrame frame)
         {
-            var value = frame.Get8(ChannelOffset);
+            var value = frame.Get8(0);
             if (value <= openThreshold || goboCount <= 0)
             {
                 State.GoboOpen = true;
@@ -43,7 +43,7 @@ namespace ArtNet.Devices.Modular
 
         private void ApplyRotation(in DmxFrame frame)
         {
-            var value = frame.Get8(ChannelOffset + 1);
+            var value = frame.Get8(1);
             if (value == 0 || value == 127)
             {
                 State.GoboRotate = false;
@@ -62,6 +62,14 @@ namespace ArtNet.Devices.Modular
 
             var positiveNormalized = Mathf.InverseLerp(128f, 255f, value);
             State.GoboRotationSpeedDegPerSecond = Mathf.Lerp(1f, maxRotationSpeedDegPerSecond, positiveNormalized);
+        }
+
+        public void Configure(int count, bool rotationEnabled, int threshold, float maxRotationSpeed)
+        {
+            goboCount = Mathf.Max(1, count);
+            hasRotationChannel = rotationEnabled;
+            openThreshold = Mathf.Clamp(threshold, 0, 255);
+            maxRotationSpeedDegPerSecond = Mathf.Max(0f, maxRotationSpeed);
         }
     }
 }

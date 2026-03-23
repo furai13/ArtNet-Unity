@@ -6,7 +6,7 @@ namespace ArtNet.Devices.Modular
 
         public override void Apply(in DmxFrame frame)
         {
-            State.Dimmer = frame.Get01(ChannelOffset);
+            State.Dimmer = frame.Get01(0);
         }
     }
 }

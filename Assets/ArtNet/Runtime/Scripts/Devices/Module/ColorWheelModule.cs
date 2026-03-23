@@ -24,7 +24,7 @@ namespace ArtNet.Devices.Modular
                 return;
             }
 
-            var index = Mathf.Min(colors.Length - 1, frame.Get8(ChannelOffset) * colors.Length / 256);
+            var index = Mathf.Min(colors.Length - 1, frame.Get8(0) * colors.Length / 256);
             State.Color = colors[index];
         }
     }

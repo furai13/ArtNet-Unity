@@ -30,5 +30,10 @@ namespace ArtNet.Devices.Modular
         {
             return Get16(coarseOffset) / 65535f;
         }
+
+        public DmxFrame Slice(int offset)
+        {
+            return new DmxFrame(_data[offset..]);
+        }
     }
 }

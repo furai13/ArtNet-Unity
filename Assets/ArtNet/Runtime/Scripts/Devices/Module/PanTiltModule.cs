@@ -12,13 +12,13 @@ namespace ArtNet.Devices.Modular
         {
             if (useFineChannels)
             {
-                State.PanNormalized = frame.Get16Normalized(ChannelOffset);
-                State.TiltNormalized = frame.Get16Normalized(ChannelOffset + 2);
+                State.PanNormalized = frame.Get16Normalized(0);
+                State.TiltNormalized = frame.Get16Normalized(2);
                 return;
             }
 
-            State.PanNormalized = frame.Get01(ChannelOffset);
-            State.TiltNormalized = frame.Get01(ChannelOffset + 1);
+            State.PanNormalized = frame.Get01(0);
+            State.TiltNormalized = frame.Get01(1);
         }
     }
 }

@@ -92,5 +92,12 @@ namespace ArtNet.Devices.Modular
 
             return openCookie;
         }
+
+        public void Configure(Light lightTarget, Texture defaultCookie, GoboSlot[] slots)
+        {
+            targetLight = lightTarget;
+            openCookie = defaultCookie;
+            gobos = slots;
+        }
     }
 }

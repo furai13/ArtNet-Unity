@@ -6,7 +6,7 @@ namespace ArtNet.Devices.Modular
 
         public override void Apply(in DmxFrame frame)
         {
-            State.BeamAngleNormalized = frame.Get01(ChannelOffset);
+            State.BeamAngleNormalized = frame.Get01(0);
         }
     }
 }

@@ -20,9 +20,9 @@ namespace ArtNet.Devices.Modular
 
         public override void Apply(in DmxFrame frame)
         {
-            var first = frame.Get01(ChannelOffset);
-            var second = frame.Get01(ChannelOffset + 1);
-            var third = frame.Get01(ChannelOffset + 2);
+            var first = frame.Get01(0);
+            var second = frame.Get01(1);
+            var third = frame.Get01(2);
 
             State.Color = colorOrder switch
             {

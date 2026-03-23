@@ -31,8 +31,8 @@ namespace ArtNet.Devices.Modular
         public override void Apply(in DmxFrame frame)
         {
             var rawValue = readMode == ReadMode.Byte
-                ? frame.Get8(ChannelOffset)
-                : frame.Get16(ChannelOffset);
+                ? frame.Get8(0)
+                : frame.Get16(0);
 
             var normalized = Mathf.InverseLerp(inputRange.x, inputRange.y, rawValue);
             var outputValue = Mathf.Lerp(outputRange.x, outputRange.y, normalized);
@@ -45,6 +45,20 @@ namespace ArtNet.Devices.Modular
             _hasLastValue = true;
             _lastValue = outputValue;
             onValueChanged?.Invoke(outputValue);
+        }
+
+        public void Configure(ReadMode mode, Vector2 sourceRange, Vector2 destinationRange, bool onlyOnChange)
+        {
+            readMode = mode;
+            inputRange = sourceRange;
+            outputRange = destinationRange;
+            invokeOnlyOnChange = onlyOnChange;
+        }
+
+        public void AddListener(UnityAction<float> listener)
+        {
+            onValueChanged ??= new FloatEvent();
+            onValueChanged.AddListener(listener);
         }
     }
 }

@@ -12,7 +12,7 @@ namespace ArtNet.Devices.Modular
 
         public override void Apply(in DmxFrame frame)
         {
-            var value = frame.Get8(ChannelOffset);
+            var value = frame.Get8(0);
             if (value <= openThreshold)
             {
                 State.StrobeEnabled = false;

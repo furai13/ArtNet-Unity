@@ -14,11 +14,15 @@ namespace ArtNet.Devices.Modular
         [SerializeField] private Transform tiltAxis;
         [SerializeField] private Vector2 panRange = new(-270f, 270f);
         [SerializeField] private Vector2 tiltRange = new(-135f, 135f);
+        [SerializeField] private Vector3 panLocalAxis = Vector3.up;
+        [SerializeField] private Vector3 tiltLocalAxis = Vector3.right;
         [SerializeField] private bool invertPan;
         [SerializeField] private bool invertTilt;
 
         private bool _strobeOpen = true;
         private float _strobeTimer;
+        private Quaternion _panInitialRotation;
+        private Quaternion _tiltInitialRotation;
 
         public override int ChannelCount => 0;
         public override int ExecutionOrder => 100;
@@ -28,6 +32,16 @@ namespace ArtNet.Devices.Modular
             if (targetLight == null)
             {
                 targetLight = GetComponent<Light>();
+            }
+
+            if (panAxis != null)
+            {
+                _panInitialRotation = panAxis.localRotation;
+            }
+
+            if (tiltAxis != null)
+            {
+                _tiltInitialRotation = tiltAxis.localRotation;
             }
         }
 
@@ -67,17 +81,15 @@ namespace ArtNet.Devices.Modular
             if (panAxis != null)
             {
                 var panValue = invertPan ? 1f - State.PanNormalized : State.PanNormalized;
-                var panEuler = panAxis.localEulerAngles;
-                panEuler.y = Mathf.Lerp(panRange.x, panRange.y, panValue);
-                panAxis.localEulerAngles = panEuler;
+                var panAngle = Mathf.Lerp(panRange.x, panRange.y, panValue);
+                panAxis.localRotation = _panInitialRotation * Quaternion.AngleAxis(panAngle, panLocalAxis.normalized);
             }
 
             if (tiltAxis != null)
             {
                 var tiltValue = invertTilt ? 1f - State.TiltNormalized : State.TiltNormalized;
-                var tiltEuler = tiltAxis.localEulerAngles;
-                tiltEuler.x = Mathf.Lerp(tiltRange.x, tiltRange.y, tiltValue);
-                tiltAxis.localEulerAngles = tiltEuler;
+                var tiltAngle = Mathf.Lerp(tiltRange.x, tiltRange.y, tiltValue);
+                tiltAxis.localRotation = _tiltInitialRotation * Quaternion.AngleAxis(tiltAngle, tiltLocalAxis.normalized);
             }
         }
 
@@ -96,6 +108,24 @@ namespace ArtNet.Devices.Modular
         private void ApplyIntensity()
         {
             targetLight.intensity = _strobeOpen ? State.Dimmer * maxIntensity : 0f;
+        }
+
+        public void Configure(
+            Light lightTarget,
+            Transform panTarget,
+            Transform tiltTarget,
+            Vector2 lightAngleRange,
+            Vector2 lightPanRange,
+            Vector2 lightTiltRange,
+            float intensityMax)
+        {
+            targetLight = lightTarget;
+            panAxis = panTarget;
+            tiltAxis = tiltTarget;
+            spotAngleRange = lightAngleRange;
+            panRange = lightPanRange;
+            tiltRange = lightTiltRange;
+            maxIntensity = intensityMax;
         }
     }
 }
