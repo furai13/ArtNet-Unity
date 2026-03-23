@@ -21,8 +21,8 @@ namespace ArtNet.Devices
 
         private void Start()
         {
-            DmxData = new byte[ChannelNumber];
             InitFixture();
+            DmxData = new byte[ChannelNumber];
         }
 
 
