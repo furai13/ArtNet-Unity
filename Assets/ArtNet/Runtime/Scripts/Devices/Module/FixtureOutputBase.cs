@@ -1,14 +1,11 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace ArtNet.Devices.Modular
 {
-    public abstract class DmxModuleBase : MonoBehaviour
+    public abstract class FixtureOutputBase : MonoBehaviour
     {
         protected DmxFixture Fixture { get; private set; }
         protected DmxFixtureState State => Fixture.State;
-
-        public abstract int ChannelCount { get; }
 
         internal void Initialize(DmxFixture fixture)
         {
@@ -20,12 +17,10 @@ namespace ArtNet.Devices.Modular
         {
         }
 
-        public abstract void Apply(in DmxFrame frame);
+        public abstract void Apply();
 
         public virtual void Tick(float deltaTime)
         {
         }
-
-        public abstract IReadOnlyList<DmxChannelDescriptor> GetChannelDescriptors();
     }
 }

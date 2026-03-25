@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ArtNet.Devices.Modular
@@ -8,6 +9,15 @@ namespace ArtNet.Devices.Modular
         [SerializeField] private bool hasRotationChannel = true;
         [SerializeField, Range(0, 255)] private int openThreshold = 7;
         [SerializeField, Range(0f, 720f)] private float maxRotationSpeedDegPerSecond = 180f;
+        private static readonly IReadOnlyList<DmxChannelDescriptor> SingleChannelDescriptors = new[]
+        {
+            new DmxChannelDescriptor("Gobo", 0)
+        };
+        private static readonly IReadOnlyList<DmxChannelDescriptor> DualChannelDescriptors = new[]
+        {
+            new DmxChannelDescriptor("Gobo", 0),
+            new DmxChannelDescriptor("Gobo Rotation", 1)
+        };
 
         public override int ChannelCount => hasRotationChannel ? 2 : 1;
 
@@ -70,6 +80,11 @@ namespace ArtNet.Devices.Modular
             hasRotationChannel = rotationEnabled;
             openThreshold = Mathf.Clamp(threshold, 0, 255);
             maxRotationSpeedDegPerSecond = Mathf.Max(0f, maxRotationSpeed);
+        }
+
+        public override IReadOnlyList<DmxChannelDescriptor> GetChannelDescriptors()
+        {
+            return hasRotationChannel ? DualChannelDescriptors : SingleChannelDescriptors;
         }
     }
 }

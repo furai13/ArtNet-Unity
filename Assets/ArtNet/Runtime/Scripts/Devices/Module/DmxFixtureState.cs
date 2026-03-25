@@ -17,5 +17,21 @@ namespace ArtNet.Devices.Modular
         public bool GoboRotate;
         public float GoboRotationSpeedDegPerSecond;
         public float GoboRotationAngle;
+
+        public void ResetToDefaults()
+        {
+            Color = Color.white;
+            Dimmer = 1f;
+            PanNormalized = 0.5f;
+            TiltNormalized = 0.5f;
+            BeamAngleNormalized = 0.5f;
+            StrobeEnabled = false;
+            StrobeRateHz = 0f;
+            GoboOpen = true;
+            GoboIndex = 0;
+            GoboRotate = false;
+            GoboRotationSpeedDegPerSecond = 0f;
+            GoboRotationAngle = 0f;
+        }
     }
 }

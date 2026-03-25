@@ -1,20 +1,17 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace ArtNet.Devices.Modular
 {
     public class ColorModule : DmxModuleBase
     {
-        public enum ColorOrder
+        [SerializeField] private ColorBlendMode blendMode = ColorBlendMode.Overwrite;
+        private static readonly IReadOnlyList<DmxChannelDescriptor> ChannelDescriptors = new[]
         {
-            RGB,
-            RBG,
-            GRB,
-            GBR,
-            BRG,
-            BGR
-        }
-
-        [SerializeField] private ColorOrder colorOrder = ColorOrder.RGB;
+            new DmxChannelDescriptor("Red", 0),
+            new DmxChannelDescriptor("Green", 1),
+            new DmxChannelDescriptor("Blue", 2)
+        };
 
         public override int ChannelCount => 3;
 
@@ -23,17 +20,21 @@ namespace ArtNet.Devices.Modular
             var first = frame.Get01(0);
             var second = frame.Get01(1);
             var third = frame.Get01(2);
+            var color = new Color(first, second, third);
 
-            State.Color = colorOrder switch
-            {
-                ColorOrder.RGB => new Color(first, second, third, 1f),
-                ColorOrder.RBG => new Color(first, third, second, 1f),
-                ColorOrder.GRB => new Color(second, first, third, 1f),
-                ColorOrder.GBR => new Color(third, first, second, 1f),
-                ColorOrder.BRG => new Color(second, third, first, 1f),
-                ColorOrder.BGR => new Color(third, second, first, 1f),
-                _ => Color.white
-            };
+            State.Color = blendMode == ColorBlendMode.Multiply
+                ? new Color(State.Color.r * color.r, State.Color.g * color.g, State.Color.b * color.b, 1f)
+                : color;
+        }
+
+        public void Configure(ColorBlendMode colorBlendMode)
+        {
+            blendMode = colorBlendMode;
+        }
+
+        public override IReadOnlyList<DmxChannelDescriptor> GetChannelDescriptors()
+        {
+            return ChannelDescriptors;
         }
     }
 }

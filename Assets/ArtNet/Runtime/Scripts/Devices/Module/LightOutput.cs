@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace ArtNet.Devices.Modular
 {
-    public class LightApplyModule : DmxModuleBase
+    public class LightOutput : FixtureOutputBase
     {
         [Header("Light")]
         [SerializeField] private Light targetLight;
@@ -24,9 +24,6 @@ namespace ArtNet.Devices.Modular
         private Quaternion _panInitialRotation;
         private Quaternion _tiltInitialRotation;
 
-        public override int ChannelCount => 0;
-        public override int ExecutionOrder => 100;
-
         protected override void OnInitialize()
         {
             if (targetLight == null)
@@ -45,7 +42,7 @@ namespace ArtNet.Devices.Modular
             }
         }
 
-        public override void Apply(in DmxFrame frame)
+        public override void Apply()
         {
             ApplyPanTilt();
             ApplyLight();

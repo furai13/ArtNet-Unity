@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -25,6 +26,15 @@ namespace ArtNet.Devices.Modular
 
         private bool _hasLastValue;
         private float _lastValue;
+        private static readonly IReadOnlyList<DmxChannelDescriptor> ByteChannelDescriptors = new[]
+        {
+            new DmxChannelDescriptor("Value", 0)
+        };
+        private static readonly IReadOnlyList<DmxChannelDescriptor> WordChannelDescriptors = new[]
+        {
+            new DmxChannelDescriptor("Value", 0),
+            new DmxChannelDescriptor("Value Fine", 1)
+        };
 
         public override int ChannelCount => readMode == ReadMode.Byte ? 1 : 2;
 
@@ -59,6 +69,11 @@ namespace ArtNet.Devices.Modular
         {
             onValueChanged ??= new FloatEvent();
             onValueChanged.AddListener(listener);
+        }
+
+        public override IReadOnlyList<DmxChannelDescriptor> GetChannelDescriptors()
+        {
+            return readMode == ReadMode.Byte ? ByteChannelDescriptors : WordChannelDescriptors;
         }
     }
 }

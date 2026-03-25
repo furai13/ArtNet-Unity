@@ -19,15 +19,22 @@ namespace ArtNet.Devices
         protected abstract void InitFixture();
         protected abstract void UpdateProperties();
 
+        public void SetAddressPatch(ushort patchedUniverse, ushort patchedStartAddress)
+        {
+            universe = patchedUniverse;
+            startAddress = patchedStartAddress;
+        }
+
         private void Start()
         {
-            InitFixture();
-            DmxData = new byte[ChannelNumber];
+            EnsureInitialized();
         }
 
 
         public void DmxUpdate(ReadOnlySpan<byte> dmx)
         {
+            EnsureInitialized();
+
             if (dmx.Length < ChannelNumber)
             {
                 ArtNetLogger.LogError($"DMX data is too short. Expected {ChannelNumber} bytes, got {dmx.Length} bytes.");
@@ -36,8 +43,20 @@ namespace ArtNet.Devices
 
             if (dmx.SequenceEqual(DmxData.AsSpan(0, ChannelNumber))) return;
             dmx[..ChannelNumber].CopyTo(DmxData);
+            //Debug.Log($"DMX data updated to {dmx.Length} bytes. Channel number: {ChannelNumber}");
 
             UpdateProperties();
+        }
+
+        private void EnsureInitialized()
+        {
+            if (DmxData != null && DmxData.Length == ChannelNumber)
+            {
+                return;
+            }
+
+            InitFixture();
+            DmxData = new byte[ChannelNumber];
         }
     }
 }

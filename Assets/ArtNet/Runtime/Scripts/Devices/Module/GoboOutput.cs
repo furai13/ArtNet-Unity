@@ -11,16 +11,13 @@ namespace ArtNet.Devices.Modular
         public Texture[] rotatedCookies;
     }
 
-    public class GoboApplyModule : DmxModuleBase
+    public class GoboOutput : FixtureOutputBase
     {
         [SerializeField] private Light targetLight;
         [SerializeField] private Texture openCookie;
         [SerializeField] private GoboSlot[] gobos;
 
         private Texture _lastCookie;
-
-        public override int ChannelCount => 0;
-        public override int ExecutionOrder => 110;
 
         protected override void OnInitialize()
         {
@@ -30,7 +27,7 @@ namespace ArtNet.Devices.Modular
             }
         }
 
-        public override void Apply(in DmxFrame frame)
+        public override void Apply()
         {
             ApplyCookie();
         }
