@@ -5,8 +5,7 @@ A tool to receive ArtNet in Unity(C#).
 This library allows you to handle ArtNet in Unity(C#).
 It includes an editor extension for checking the status of ArtNet reception and saving and sending ArtNet DMX packets without running the game.
 
-
-[日本語](./README_ja.md)
+[Japanese](./README_ja.md)
 
 ![dmx_receive](https://github.com/user-attachments/assets/08afbbf8-4892-478c-9feb-4b8f74832e6d)
 
@@ -21,11 +20,26 @@ You can install it with Unity Package Manager.
 3. Enter the following URL and click the `Add` button.
 
 ```
-https://github.com/nasshu2916/ArtNet-Unity.git?path=/Assets/ArtNet#master
+https://github.com/furai13/ArtNet-Unity.git?path=/Package
 ```
 
 > [!NOTE]
 > Unity 2021.3.1 (C# 9) or later is required.
+
+## Development
+
+This repository uses a split layout:
+
+- The package root is `Package/`.
+- The Unity development project lives in `Dev/`.
+
+To work on the package locally:
+
+1. Open `Dev/` as the Unity project.
+2. The package is referenced from `Dev/Packages/manifest.json` via `file:../../Package`.
+3. Edit package code in `Package/Runtime/`, `Package/Editor/`, `Package/Tests/`, and `Package/Samples~/`.
+
+Use `Dev/Assets/` only for local validation scenes, temporary assets, and project-specific configuration.
 
 ## Usage
 
@@ -66,7 +80,7 @@ You can check the time of the last ArtNet packet received and the contents of th
 This editor extension can save ArtNet packets without playing the editor.
 
 By pressing the record start button, the reception and saving of ArtNet packets will start. You can save the received ArtNet packets in Animation Clip or Binary format until you press the stop button.
-The recorded Binary file is saved in a [custom format](Docs/BinaryFormat.md), and you can play the recorded ArtNet packets using the DmxPlayer.
+The recorded Binary file is saved in a [custom format](Package/Documentation~/BinaryFormat.md), and you can play the recorded ArtNet packets using the DmxPlayer.
 
 The recorded Animation Clip can be played using the Animation component. The recorded Binary file can be played using the DmxPlayer.
 

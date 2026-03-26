@@ -17,11 +17,26 @@ Unity Package Manager でインストールできます。
 3. 以下の URL を入力し、`Add` ボタンをクリックします。
 
 ```
-https://github.com/nasshu2916/ArtNet-Unity.git?path=/Assets/ArtNet#master
+https://github.com/furai13/ArtNet-Unity.git?path=/Package
 ```
 
 > [!NOTE]
 > Unity 2021.3.1 (C# 9) 以降が必要です。
+
+## 開発方法
+
+このリポジトリは以下の構成に分かれています。
+
+- パッケージ本体は `Package/`
+- Unity の開発用プロジェクトは `Dev/`
+
+ローカルで開発する場合は次の手順です。
+
+1. Unity で `Dev/` を開きます。
+2. `Dev/Packages/manifest.json` から `file:../../Package` でこのパッケージを参照します。
+3. パッケージのコードは `Package/Runtime/` `Package/Editor/` `Package/Tests/` `Package/Samples~/` を編集します。
+
+`Dev/Assets/` は検証用シーン、一時アセット、プロジェクト固有の設定のみに使います。
 
 ## 使用方法
 
@@ -68,7 +83,7 @@ Editor を再生せずに ArtNet のパケットを保存できるエディタ�
 録画開始ボタンを押すことで、ArtNet パケットの受信と保存が開始され、停止ボタンを押すまでの間に受信した ArtNet パケットを
 Animation Clip か Binary 形式で保存できます。
 
-録画した Binary ファイルは [独自形式](Docs/BinaryFormat_ja.md) で保存され、DmxPlayer を使うことで録画した ArtNet
+録画した Binary ファイルは [独自形式](Package/Documentation~/BinaryFormat_ja.md) で保存され、DmxPlayer を使うことで録画した ArtNet
 パケットを送信することが可能です。
 
 録画した Animation Clip は Animation コンポーネントを使って再生することができ、Binary ファイルはエディタ拡張の DmxPlayer を使って再生することができます。

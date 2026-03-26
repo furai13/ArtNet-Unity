@@ -1,0 +1,27 @@
+:root {
+    --dmx-address-bar-color: darkgreen;
+}
+
+.dmx-address-bar {
+    position: absolute;
+    bottom: 0;
+    min-height: 0;
+    max-height: 100%;
+    width: 100%;
+    background-color: var(--dmx-address-bar-color);
+}
+
+.dmx-address-panel {
+    font-size: 11px;
+    width: 100%;
+    height: 100%;
+    padding: 5px;
+    justify-content: space-between;
+}
+
+.dmx-address-value {
+    font-size: 14px;
+    -unity-font-style: bold;
+    -unity-text-align: lower-center;
+    padding-top: 5px;
+}

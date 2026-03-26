@@ -9,6 +9,29 @@
 /[Bb]uilds/
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
+/Dev/[Ll]ibrary/
+/Dev/[Tt]emp/
+/Dev/[Oo]bj/
+/Dev/[Bb]uild/
+/Dev/[Bb]uilds/
+/Dev/[Ll]ogs/
+/Dev/[Uu]ser[Ss]ettings/
+/Dev/[Mm]emoryCaptures/
+/Dev/[Rr]ecordings/
+/Dev/*.sln
+/Dev/*.csproj
+/Dev/*.unityproj
+/Dev/*.suo
+/Dev/*.tmp
+/Dev/*.user
+/Dev/*.userprefs
+/Dev/*.pidb
+/Dev/*.booproj
+/Dev/*.svd
+/Dev/*.pdb
+/Dev/*.mdb
+/Dev/*.opendb
+/Dev/*.VC.db
 
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
@@ -46,6 +69,8 @@ ExportedObj/
 *.mdb
 *.opendb
 *.VC.db
+/*.csproj.meta
+/*.sln.meta
 
 # Unity3D generated meta files
 *.pidb.meta
