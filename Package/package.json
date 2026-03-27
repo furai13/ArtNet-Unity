@@ -1,7 +1,7 @@
 {
   "name": "com.furai13.artnet-unity",
   "author": "furai13",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "displayName": "ArtNet-Unity",
   "description": "Fork maintained by furai13",
   "dependencies": {},
