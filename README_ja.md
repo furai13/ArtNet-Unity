@@ -2,6 +2,8 @@
 
 Unity(C#) で ArtNet を扱うためのライブラリです。
 
+このリポジトリは ArtNet-Unity の fork で、furai13 が保守しています。
+
 エディタ拡張として、ArtNet の受信状況の確認や ArtNet DMX パケットの保存、送信を行うことができる機能もあります。
 
 ![dmx_receive](https://github.com/user-attachments/assets/08afbbf8-4892-478c-9feb-4b8f74832e6d)

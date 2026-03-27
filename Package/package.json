@@ -1,9 +1,9 @@
 {
-  "name": "net.naoyakohda.artnet-unity",
-  "author": "Naoya Kohda",
+  "name": "com.furai13.artnet-unity",
+  "author": "furai13",
   "version": "0.2.0",
   "displayName": "ArtNet-Unity",
-  "description": "Art-Net library for Unity",
+  "description": "Fork maintained by furai13",
   "dependencies": {},
   "keywords": [
     "unity",

@@ -2,6 +2,8 @@
 
 A tool to receive ArtNet in Unity(C#).
 
+This repository is a fork of ArtNet-Unity, maintained by furai13.
+
 This library allows you to handle ArtNet in Unity(C#).
 It includes an editor extension for checking the status of ArtNet reception and saving and sending ArtNet DMX packets without running the game.
 

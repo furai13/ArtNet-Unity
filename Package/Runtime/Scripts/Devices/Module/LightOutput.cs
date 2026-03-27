@@ -8,12 +8,16 @@ namespace ArtNet.Devices.Modular
         [SerializeField] private Light targetLight;
         [SerializeField, Min(0f)] private float maxIntensity = 2f;
         [SerializeField] private Vector2 spotAngleRange = new(10f, 60f);
+        [SerializeField, Min(0f)] private float beamAngleSpeedDegPerSecond;
 
         [Header("Pan/Tilt")]
         [SerializeField] private Transform panAxis;
         [SerializeField] private Transform tiltAxis;
         [SerializeField] private Vector2 panRange = new(-270f, 270f);
         [SerializeField] private Vector2 tiltRange = new(-135f, 135f);
+        [SerializeField, Min(0f)] private float panSpeedDegPerSecond;
+        [SerializeField, Min(0f)] private float tiltSpeedDegPerSecond;
+        [SerializeField] private bool useShortestPathForPan = true;
         [SerializeField] private Vector3 panLocalAxis = Vector3.up;
         [SerializeField] private Vector3 tiltLocalAxis = Vector3.right;
         [SerializeField] private bool invertPan;
@@ -23,6 +27,9 @@ namespace ArtNet.Devices.Modular
         private float _strobeTimer;
         private Quaternion _panInitialRotation;
         private Quaternion _tiltInitialRotation;
+        private float _currentPanAngle;
+        private float _currentTiltAngle;
+        private float _currentBeamAngle;
 
         protected override void OnInitialize()
         {
@@ -34,22 +41,35 @@ namespace ArtNet.Devices.Modular
             if (panAxis != null)
             {
                 _panInitialRotation = panAxis.localRotation;
+                _currentPanAngle = GetTargetPanAngle();
             }
 
             if (tiltAxis != null)
             {
                 _tiltInitialRotation = tiltAxis.localRotation;
+                _currentTiltAngle = GetTargetTiltAngle();
             }
+
+            _currentBeamAngle = GetTargetBeamAngle();
         }
 
         public override void Apply()
         {
+            _currentPanAngle = GetTargetPanAngle();
+            _currentTiltAngle = GetTargetTiltAngle();
+            _currentBeamAngle = GetTargetBeamAngle();
+
             ApplyPanTilt();
             ApplyLight();
         }
 
         public override void Tick(float deltaTime)
         {
+            UpdatePanTilt(deltaTime);
+            UpdateBeamAngle(deltaTime);
+            ApplyPanTilt();
+            ApplyBeamAngle();
+
             if (targetLight == null)
             {
                 return;
@@ -73,20 +93,51 @@ namespace ArtNet.Devices.Modular
             ApplyIntensity();
         }
 
+        private void UpdatePanTilt(float deltaTime)
+        {
+            var targetPanAngle = GetTargetPanAngle();
+            var targetTiltAngle = GetTargetTiltAngle();
+
+            _currentPanAngle = MoveAngle(
+                _currentPanAngle,
+                targetPanAngle,
+                panSpeedDegPerSecond,
+                deltaTime,
+                useShortestPathForPan);
+
+            _currentTiltAngle = MoveAngle(
+                _currentTiltAngle,
+                targetTiltAngle,
+                tiltSpeedDegPerSecond,
+                deltaTime,
+                false);
+        }
+
+        private void UpdateBeamAngle(float deltaTime)
+        {
+            var targetBeamAngle = GetTargetBeamAngle();
+            if (beamAngleSpeedDegPerSecond <= 0f)
+            {
+                _currentBeamAngle = targetBeamAngle;
+                return;
+            }
+
+            _currentBeamAngle = Mathf.MoveTowards(
+                _currentBeamAngle,
+                targetBeamAngle,
+                beamAngleSpeedDegPerSecond * deltaTime);
+        }
+
         private void ApplyPanTilt()
         {
             if (panAxis != null)
             {
-                var panValue = invertPan ? 1f - State.PanNormalized : State.PanNormalized;
-                var panAngle = Mathf.Lerp(panRange.x, panRange.y, panValue);
-                panAxis.localRotation = _panInitialRotation * Quaternion.AngleAxis(panAngle, panLocalAxis.normalized);
+                panAxis.localRotation = _panInitialRotation * Quaternion.AngleAxis(_currentPanAngle, panLocalAxis.normalized);
             }
 
             if (tiltAxis != null)
             {
-                var tiltValue = invertTilt ? 1f - State.TiltNormalized : State.TiltNormalized;
-                var tiltAngle = Mathf.Lerp(tiltRange.x, tiltRange.y, tiltValue);
-                tiltAxis.localRotation = _tiltInitialRotation * Quaternion.AngleAxis(tiltAngle, tiltLocalAxis.normalized);
+                tiltAxis.localRotation = _tiltInitialRotation * Quaternion.AngleAxis(_currentTiltAngle, tiltLocalAxis.normalized);
             }
         }
 
@@ -98,13 +149,56 @@ namespace ArtNet.Devices.Modular
             }
 
             targetLight.color = State.Color;
-            targetLight.spotAngle = Mathf.Lerp(spotAngleRange.x, spotAngleRange.y, State.BeamAngleNormalized);
+            ApplyBeamAngle();
             ApplyIntensity();
+        }
+
+        private void ApplyBeamAngle()
+        {
+            if (targetLight == null)
+            {
+                return;
+            }
+
+            targetLight.spotAngle = _currentBeamAngle;
         }
 
         private void ApplyIntensity()
         {
             targetLight.intensity = _strobeOpen ? State.Dimmer * maxIntensity : 0f;
+        }
+
+        private float GetTargetPanAngle()
+        {
+            var panValue = invertPan ? 1f - State.PanNormalized : State.PanNormalized;
+            return Mathf.Lerp(panRange.x, panRange.y, panValue);
+        }
+
+        private float GetTargetTiltAngle()
+        {
+            var tiltValue = invertTilt ? 1f - State.TiltNormalized : State.TiltNormalized;
+            return Mathf.Lerp(tiltRange.x, tiltRange.y, tiltValue);
+        }
+
+        private float GetTargetBeamAngle()
+        {
+            return Mathf.Lerp(spotAngleRange.x, spotAngleRange.y, State.BeamAngleNormalized);
+        }
+
+        private static float MoveAngle(float current, float target, float speedDegPerSecond, float deltaTime, bool shortestPath)
+        {
+            if (speedDegPerSecond <= 0f)
+            {
+                return target;
+            }
+
+            var maxDelta = speedDegPerSecond * deltaTime;
+            if (shortestPath)
+            {
+                return Mathf.MoveTowardsAngle(current, target, maxDelta);
+            }
+
+            return Mathf.MoveTowards(current, target, maxDelta);
         }
 
         public void Configure(
