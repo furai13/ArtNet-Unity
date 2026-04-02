@@ -186,6 +186,121 @@ namespace Tests.Devices.Module
         }
 
         [Test]
+        public void LightOutput_CanDriveMultipleLightsWithDimmerCurve()
+        {
+            var root = CreateGameObject("Fixture");
+            var lightA = CreateGameObject("LightA").AddComponent<Light>();
+            var lightB = CreateGameObject("LightB").AddComponent<Light>();
+            lightA.transform.SetParent(root.transform, false);
+            lightB.transform.SetParent(root.transform, false);
+
+            var fixture = root.AddComponent<DmxFixture>();
+            var color = root.AddComponent<ColorModule>();
+            var dimmer = root.AddComponent<DimmerModule>();
+            var output = root.AddComponent<LightOutput>();
+            output.Configure(new[] { lightA, lightB }, null, null, new Vector2(10f, 60f), new Vector2(-90f, 90f), new Vector2(-45f, 45f), 4f);
+            SetPrivateField(
+                output,
+                typeof(ColorDimmerOutputBase),
+                "dimmerCurve",
+                new AnimationCurve(
+                    new Keyframe(0f, 0f),
+                    new Keyframe(0.5f, 0.25f),
+                    new Keyframe(1f, 1f)));
+
+            fixture.SetModules(new[]
+            {
+                fixture.CreateEntry(color, 0),
+                fixture.CreateEntry(dimmer, 3)
+            });
+            fixture.SetOutputs(new FixtureOutputBase[] { output });
+
+            InitializeFixture(fixture);
+            fixture.DmxUpdate(new byte[] { 255, 64, 0, 128 });
+
+            var expectedDimmer = 0.25f * 4f;
+            Assert.That(lightA.color.r, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(lightA.color.g, Is.EqualTo(64f / 255f).Within(0.001f));
+            Assert.That(lightA.intensity, Is.EqualTo(expectedDimmer).Within(0.02f));
+            Assert.That(lightB.intensity, Is.EqualTo(expectedDimmer).Within(0.02f));
+        }
+
+        [Test]
+        public void RendererPropertyBlockOutput_AppliesColorAndDimmerToAllRenderers()
+        {
+            var root = CreateGameObject("Fixture");
+            var rendererA = CreateGameObject("RendererA").AddComponent<MeshRenderer>();
+            var rendererB = CreateGameObject("RendererB").AddComponent<MeshRenderer>();
+            rendererA.transform.SetParent(root.transform, false);
+            rendererB.transform.SetParent(root.transform, false);
+
+            var fixture = root.AddComponent<DmxFixture>();
+            var color = root.AddComponent<ColorModule>();
+            var dimmer = root.AddComponent<DimmerModule>();
+            var output = root.AddComponent<RendererPropertyBlockOutput>();
+            output.Configure(new Renderer[] { rendererA, rendererB }, "_DmxColor", "_DmxDimmer");
+
+            fixture.SetModules(new[]
+            {
+                fixture.CreateEntry(color, 0),
+                fixture.CreateEntry(dimmer, 3)
+            });
+            fixture.SetOutputs(new FixtureOutputBase[] { output });
+
+            InitializeFixture(fixture);
+            fixture.DmxUpdate(new byte[] { 255, 32, 128, 64 });
+
+            var colorPropertyId = Shader.PropertyToID("_DmxColor");
+            var dimmerPropertyId = Shader.PropertyToID("_DmxDimmer");
+            var block = new MaterialPropertyBlock();
+            rendererA.GetPropertyBlock(block);
+            Assert.That(block.GetColor(colorPropertyId).r, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(block.GetColor(colorPropertyId).g, Is.EqualTo(32f / 255f).Within(0.001f));
+            Assert.That(block.GetColor(colorPropertyId).b, Is.EqualTo(128f / 255f).Within(0.001f));
+            Assert.That(block.GetFloat(dimmerPropertyId), Is.EqualTo(64f / 255f).Within(0.001f));
+
+            rendererB.GetPropertyBlock(block);
+            Assert.That(block.GetFloat(dimmerPropertyId), Is.EqualTo(64f / 255f).Within(0.001f));
+        }
+
+        [Test]
+        public void FunctionChannelModule_CanRequestFixtureReset()
+        {
+            var root = CreateGameObject("Fixture");
+            var light = root.AddComponent<Light>();
+            var fixture = root.AddComponent<DmxFixture>();
+            var color = root.AddComponent<ColorModule>();
+            var function = root.AddComponent<FunctionChannelModule>();
+            var output = root.AddComponent<LightOutput>();
+            output.Configure(light, null, null, new Vector2(10f, 60f), new Vector2(-90f, 90f), new Vector2(-45f, 45f), 2f);
+            function.Configure(new[]
+            {
+                new FunctionChannelModule.FunctionRange
+                {
+                    label = "Reset",
+                    min = 200,
+                    max = 255,
+                    action = FunctionChannelModule.FunctionAction.ResetFixture
+                }
+            }, true);
+
+            fixture.SetModules(new[]
+            {
+                fixture.CreateEntry(color, 0),
+                fixture.CreateEntry(function, 3)
+            });
+            fixture.SetOutputs(new FixtureOutputBase[] { output });
+
+            InitializeFixture(fixture);
+            fixture.DmxUpdate(new byte[] { 255, 0, 0, 255 });
+
+            Assert.That(fixture.State.Color, Is.EqualTo(Color.white));
+            Assert.That(fixture.State.Dimmer, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(light.color, Is.EqualTo(Color.white));
+            Assert.That(light.intensity, Is.EqualTo(2f).Within(0.001f));
+        }
+
+        [Test]
         public void GoboOutput_SelectsCookieFromConfiguredSlot()
         {
             var root = CreateGameObject("Fixture");
@@ -255,6 +370,13 @@ namespace Tests.Devices.Module
         private static void AssertQuaternionApproximately(Quaternion actual, Quaternion expected, float tolerance)
         {
             Assert.That(Quaternion.Dot(actual, expected), Is.EqualTo(1f).Within(tolerance));
+        }
+
+        private static void SetPrivateField(Object target, System.Type declaringType, string fieldName, object value)
+        {
+            var field = declaringType.GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, $"Field '{fieldName}' was not found on {declaringType.Name}.");
+            field.SetValue(target, value);
         }
     }
 }

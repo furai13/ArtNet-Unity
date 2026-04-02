@@ -21,6 +21,7 @@ namespace ArtNet.Devices.Modular
         [SerializeField] private FixtureOutputBase[] outputs = Array.Empty<FixtureOutputBase>();
 
         private byte _channelCount;
+        private bool _resetRequested;
 
         public override byte ChannelNumber => _channelCount;
         public DmxFixtureState State { get; } = new();
@@ -78,6 +79,7 @@ namespace ArtNet.Devices.Modular
         protected override void UpdateProperties()
         {
             var frame = new DmxFrame(DmxData);
+            _resetRequested = false;
             foreach (var entry in modules)
             {
                 if (entry.module == null)
@@ -100,6 +102,12 @@ namespace ArtNet.Devices.Modular
                 }
 
                 entry.module.Apply(frame.Slice(entry.offset));
+            }
+
+            if (_resetRequested)
+            {
+                PerformRequestedReset();
+                return;
             }
 
             foreach (var output in outputs)
@@ -156,6 +164,11 @@ namespace ArtNet.Devices.Modular
         public void RegisterChildModules()
         {
             modules = CollectModulesFromChildren();
+        }
+
+        internal void RequestReset()
+        {
+            _resetRequested = true;
         }
 
         public ModuleEntry CreateEntry(DmxModuleBase module, int offset)
@@ -236,6 +249,12 @@ namespace ArtNet.Devices.Modular
         private void AutoAssignChannelsFromContextMenu()
         {
             AutoAssignModuleChannels();
+        }
+
+        private void PerformRequestedReset()
+        {
+            _resetRequested = false;
+            ReinitializeFixture();
         }
     }
 }

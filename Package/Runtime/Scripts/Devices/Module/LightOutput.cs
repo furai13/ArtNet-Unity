@@ -1,11 +1,14 @@
+using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace ArtNet.Devices.Modular
 {
-    public class LightOutput : FixtureOutputBase
+    public class LightOutput : ColorDimmerOutputBase
     {
         [Header("Light")]
-        [SerializeField] private Light targetLight;
+        [SerializeField] private Light[] targetLights = Array.Empty<Light>();
+        [SerializeField, FormerlySerializedAs("targetLight"), HideInInspector] private Light legacyTargetLight;
         [SerializeField, Min(0f)] private float maxIntensity = 2f;
         [SerializeField] private Vector2 spotAngleRange = new(10f, 60f);
         [SerializeField, Min(0f)] private float beamAngleSpeedDegPerSecond;
@@ -23,8 +26,6 @@ namespace ArtNet.Devices.Modular
         [SerializeField] private bool invertPan;
         [SerializeField] private bool invertTilt;
 
-        private bool _strobeOpen = true;
-        private float _strobeTimer;
         private Quaternion _panInitialRotation;
         private Quaternion _tiltInitialRotation;
         private float _currentPanAngle;
@@ -33,9 +34,17 @@ namespace ArtNet.Devices.Modular
 
         protected override void OnInitialize()
         {
-            if (targetLight == null)
+            if (targetLights == null || targetLights.Length == 0)
             {
-                targetLight = GetComponent<Light>();
+                if (legacyTargetLight != null)
+                {
+                    targetLights = new[] { legacyTargetLight };
+                }
+                else
+                {
+                    var targetLight = GetComponent<Light>();
+                    targetLights = targetLight != null ? new[] { targetLight } : Array.Empty<Light>();
+                }
             }
 
             if (panAxis != null)
@@ -51,6 +60,7 @@ namespace ArtNet.Devices.Modular
             }
 
             _currentBeamAngle = GetTargetBeamAngle();
+            InitializeColorDimmerOutput();
         }
 
         public override void Apply()
@@ -60,7 +70,8 @@ namespace ArtNet.Devices.Modular
             _currentBeamAngle = GetTargetBeamAngle();
 
             ApplyPanTilt();
-            ApplyLight();
+            ApplyLightColorAndIntensity();
+            ApplyBeamAngle();
         }
 
         public override void Tick(float deltaTime)
@@ -69,28 +80,7 @@ namespace ArtNet.Devices.Modular
             UpdateBeamAngle(deltaTime);
             ApplyPanTilt();
             ApplyBeamAngle();
-
-            if (targetLight == null)
-            {
-                return;
-            }
-
-            if (!State.StrobeEnabled || State.StrobeRateHz <= 0f)
-            {
-                _strobeOpen = true;
-                ApplyIntensity();
-                return;
-            }
-
-            _strobeTimer += deltaTime * State.StrobeRateHz;
-            if (_strobeTimer < 1f)
-            {
-                return;
-            }
-
-            _strobeTimer -= 1f;
-            _strobeOpen = !_strobeOpen;
-            ApplyIntensity();
+            UpdateColorDimmerOutput(deltaTime);
         }
 
         private void UpdatePanTilt(float deltaTime)
@@ -141,31 +131,36 @@ namespace ArtNet.Devices.Modular
             }
         }
 
-        private void ApplyLight()
+        private void ApplyLightColorAndIntensity()
         {
-            if (targetLight == null)
-            {
-                return;
-            }
-
-            targetLight.color = State.Color;
-            ApplyBeamAngle();
-            ApplyIntensity();
+            RefreshColorDimmerOutput();
         }
 
         private void ApplyBeamAngle()
         {
-            if (targetLight == null)
+            foreach (var targetLight in targetLights)
             {
-                return;
-            }
+                if (targetLight == null)
+                {
+                    continue;
+                }
 
-            targetLight.spotAngle = _currentBeamAngle;
+                targetLight.spotAngle = _currentBeamAngle;
+            }
         }
 
-        private void ApplyIntensity()
+        protected override void ApplyColorDimmer(Color color, float dimmer)
         {
-            targetLight.intensity = _strobeOpen ? State.Dimmer * maxIntensity : 0f;
+            foreach (var targetLight in targetLights)
+            {
+                if (targetLight == null)
+                {
+                    continue;
+                }
+
+                targetLight.color = color;
+                targetLight.intensity = dimmer * maxIntensity;
+            }
         }
 
         private float GetTargetPanAngle()
@@ -210,7 +205,25 @@ namespace ArtNet.Devices.Modular
             Vector2 lightTiltRange,
             float intensityMax)
         {
-            targetLight = lightTarget;
+            targetLights = lightTarget != null ? new[] { lightTarget } : Array.Empty<Light>();
+            panAxis = panTarget;
+            tiltAxis = tiltTarget;
+            spotAngleRange = lightAngleRange;
+            panRange = lightPanRange;
+            tiltRange = lightTiltRange;
+            maxIntensity = intensityMax;
+        }
+
+        public void Configure(
+            Light[] lightTargets,
+            Transform panTarget,
+            Transform tiltTarget,
+            Vector2 lightAngleRange,
+            Vector2 lightPanRange,
+            Vector2 lightTiltRange,
+            float intensityMax)
+        {
+            targetLights = lightTargets ?? Array.Empty<Light>();
             panAxis = panTarget;
             tiltAxis = tiltTarget;
             spotAngleRange = lightAngleRange;
