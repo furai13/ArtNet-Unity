@@ -12,6 +12,12 @@ namespace ArtNet.Devices.Modular
             new DmxChannelDescriptor("Green", 1),
             new DmxChannelDescriptor("Blue", 2)
         };
+        private static readonly IReadOnlyList<DmxQuickActionDefinition> QuickActions = new[]
+        {
+            new DmxQuickActionDefinition(DmxQuickActionIds.Blackout, "Blackout"),
+            new DmxQuickActionDefinition(DmxQuickActionIds.Full, "Full"),
+            new DmxQuickActionDefinition(DmxQuickActionIds.White, "White")
+        };
 
         public override int ChannelCount => 3;
 
@@ -35,6 +41,34 @@ namespace ArtNet.Devices.Modular
         public override IReadOnlyList<DmxChannelDescriptor> GetChannelDescriptors()
         {
             return ChannelDescriptors;
+        }
+
+        public override IReadOnlyList<DmxQuickActionDefinition> GetQuickActionDefinitions()
+        {
+            return QuickActions;
+        }
+
+        public override bool TryBuildQuickAction(string actionId, List<DmxQuickActionOverride> overrides)
+        {
+            switch (actionId)
+            {
+                case DmxQuickActionIds.Blackout:
+                    AddRgbOverrides(overrides, 0);
+                    return true;
+                case DmxQuickActionIds.Full:
+                case DmxQuickActionIds.White:
+                    AddRgbOverrides(overrides, byte.MaxValue);
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private static void AddRgbOverrides(List<DmxQuickActionOverride> overrides, byte value)
+        {
+            overrides.Add(new DmxQuickActionOverride(0, value));
+            overrides.Add(new DmxQuickActionOverride(1, value));
+            overrides.Add(new DmxQuickActionOverride(2, value));
         }
     }
 }

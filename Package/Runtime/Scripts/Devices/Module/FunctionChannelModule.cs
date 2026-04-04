@@ -32,6 +32,10 @@ namespace ArtNet.Devices.Modular
         {
             new DmxChannelDescriptor("Function", 0)
         };
+        private static readonly IReadOnlyList<DmxQuickActionDefinition> QuickActions = new[]
+        {
+            new DmxQuickActionDefinition(DmxQuickActionIds.Reset, "Reset")
+        };
 
         [SerializeField] private bool triggerOnlyOnChange = true;
         [SerializeField] private FunctionRange[] functions = Array.Empty<FunctionRange>();
@@ -66,6 +70,34 @@ namespace ArtNet.Devices.Modular
         public override IReadOnlyList<DmxChannelDescriptor> GetChannelDescriptors()
         {
             return ChannelDescriptors;
+        }
+
+        public override IReadOnlyList<DmxQuickActionDefinition> GetQuickActionDefinitions()
+        {
+            return QuickActions;
+        }
+
+        public override bool TryBuildQuickAction(string actionId, List<DmxQuickActionOverride> overrides)
+        {
+            if (actionId != DmxQuickActionIds.Reset)
+            {
+                return false;
+            }
+
+            for (var i = 0; i < functions.Length; i++)
+            {
+                var function = functions[i];
+                if (function == null || function.action != FunctionAction.ResetFixture)
+                {
+                    continue;
+                }
+
+                var midpoint = Mathf.Clamp((function.min + function.max) / 2, 0, 255);
+                overrides.Add(new DmxQuickActionOverride(0, (byte)midpoint));
+                return true;
+            }
+
+            return false;
         }
 
         public void Configure(FunctionRange[] configuredFunctions, bool onlyOnChange)

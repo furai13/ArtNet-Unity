@@ -9,6 +9,12 @@ namespace ArtNet.Devices.Modular
         {
             new DmxChannelDescriptor("Strobe", 0)
         };
+        private static readonly IReadOnlyList<DmxQuickActionDefinition> QuickActions = new[]
+        {
+            new DmxQuickActionDefinition(DmxQuickActionIds.Open, "Open"),
+            new DmxQuickActionDefinition(DmxQuickActionIds.Stop, "Stop"),
+            new DmxQuickActionDefinition(DmxQuickActionIds.Full, "Full")
+        };
 
         [SerializeField, Range(0, 255)] private int openThreshold = 15;
         [SerializeField, Min(0.1f)] private float minRateHz = 1f;
@@ -34,6 +40,27 @@ namespace ArtNet.Devices.Modular
         public override IReadOnlyList<DmxChannelDescriptor> GetChannelDescriptors()
         {
             return ChannelDescriptors;
+        }
+
+        public override IReadOnlyList<DmxQuickActionDefinition> GetQuickActionDefinitions()
+        {
+            return QuickActions;
+        }
+
+        public override bool TryBuildQuickAction(string actionId, List<DmxQuickActionOverride> overrides)
+        {
+            switch (actionId)
+            {
+                case DmxQuickActionIds.Open:
+                case DmxQuickActionIds.Stop:
+                    overrides.Add(new DmxQuickActionOverride(0, (byte)Mathf.Clamp(openThreshold, 0, 255)));
+                    return true;
+                case DmxQuickActionIds.Full:
+                    overrides.Add(new DmxQuickActionOverride(0, byte.MaxValue));
+                    return true;
+                default:
+                    return false;
+            }
         }
     }
 }

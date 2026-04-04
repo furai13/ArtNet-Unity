@@ -18,6 +18,15 @@ namespace ArtNet.Devices.Modular
             new DmxChannelDescriptor("Gobo", 0),
             new DmxChannelDescriptor("Gobo Rotation", 1)
         };
+        private static readonly IReadOnlyList<DmxQuickActionDefinition> SingleChannelQuickActions = new[]
+        {
+            new DmxQuickActionDefinition(DmxQuickActionIds.Open, "Open")
+        };
+        private static readonly IReadOnlyList<DmxQuickActionDefinition> DualChannelQuickActions = new[]
+        {
+            new DmxQuickActionDefinition(DmxQuickActionIds.Open, "Open"),
+            new DmxQuickActionDefinition(DmxQuickActionIds.Stop, "Stop Rotation")
+        };
 
         public override int ChannelCount => hasRotationChannel ? 2 : 1;
 
@@ -85,6 +94,31 @@ namespace ArtNet.Devices.Modular
         public override IReadOnlyList<DmxChannelDescriptor> GetChannelDescriptors()
         {
             return hasRotationChannel ? DualChannelDescriptors : SingleChannelDescriptors;
+        }
+
+        public override IReadOnlyList<DmxQuickActionDefinition> GetQuickActionDefinitions()
+        {
+            return hasRotationChannel ? DualChannelQuickActions : SingleChannelQuickActions;
+        }
+
+        public override bool TryBuildQuickAction(string actionId, List<DmxQuickActionOverride> overrides)
+        {
+            switch (actionId)
+            {
+                case DmxQuickActionIds.Open:
+                    overrides.Add(new DmxQuickActionOverride(0, (byte)Mathf.Clamp(openThreshold, 0, 255)));
+                    return true;
+                case DmxQuickActionIds.Stop:
+                    if (!hasRotationChannel)
+                    {
+                        return false;
+                    }
+
+                    overrides.Add(new DmxQuickActionOverride(1, 127));
+                    return true;
+                default:
+                    return false;
+            }
         }
     }
 }

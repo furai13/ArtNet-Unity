@@ -20,6 +20,11 @@ namespace ArtNet.Devices.Modular
         {
             new DmxChannelDescriptor("Color Wheel", 0)
         };
+        private static readonly IReadOnlyList<DmxQuickActionDefinition> QuickActions = new[]
+        {
+            new DmxQuickActionDefinition(DmxQuickActionIds.Open, "Open"),
+            new DmxQuickActionDefinition(DmxQuickActionIds.White, "White")
+        };
 
         public override int ChannelCount => 1;
 
@@ -50,6 +55,63 @@ namespace ArtNet.Devices.Modular
         public override IReadOnlyList<DmxChannelDescriptor> GetChannelDescriptors()
         {
             return ChannelDescriptors;
+        }
+
+        public override IReadOnlyList<DmxQuickActionDefinition> GetQuickActionDefinitions()
+        {
+            return QuickActions;
+        }
+
+        public override bool TryBuildQuickAction(string actionId, List<DmxQuickActionOverride> overrides)
+        {
+            switch (actionId)
+            {
+                case DmxQuickActionIds.Open:
+                case DmxQuickActionIds.White:
+                    if (!TryFindClosestColorIndex(Color.white, out var index))
+                    {
+                        return false;
+                    }
+
+                    overrides.Add(new DmxQuickActionOverride(0, EncodeColorIndex(index)));
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private bool TryFindClosestColorIndex(Color target, out int index)
+        {
+            index = -1;
+            if (colors == null || colors.Length == 0)
+            {
+                return false;
+            }
+
+            var bestDistance = float.PositiveInfinity;
+            for (var i = 0; i < colors.Length; i++)
+            {
+                var candidate = colors[i];
+                var distance =
+                    Mathf.Abs(candidate.r - target.r) +
+                    Mathf.Abs(candidate.g - target.g) +
+                    Mathf.Abs(candidate.b - target.b);
+
+                if (distance < bestDistance)
+                {
+                    bestDistance = distance;
+                    index = i;
+                }
+            }
+
+            return index >= 0;
+        }
+
+        private byte EncodeColorIndex(int index)
+        {
+            var bucketSize = 256f / colors.Length;
+            var encoded = Mathf.FloorToInt(bucketSize * index + bucketSize * 0.5f);
+            return (byte)Mathf.Clamp(encoded, 0, 255);
         }
     }
 }

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace ArtNet.Devices.Modular
+namespace ArtNet.Devices.Modular.Output
 {
     [Serializable]
     public struct GoboSlot

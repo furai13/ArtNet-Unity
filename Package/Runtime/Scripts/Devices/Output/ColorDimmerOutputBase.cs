@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ArtNet.Devices.Modular
+namespace ArtNet.Devices.Modular.Output
 {
     public abstract class ColorDimmerOutputBase : FixtureOutputBase
     {

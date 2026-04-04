@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using ArtNet.Devices;
 using ArtNet.Devices.Modular;
+using ArtNet.Devices.Modular.Output;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -126,6 +128,153 @@ namespace Tests.Devices.Module
             Assert.That(modules[0].offset, Is.EqualTo(0));
             Assert.That(modules[1].offset, Is.EqualTo(3));
             Assert.That(modules[2].offset, Is.EqualTo(4));
+        }
+
+        [Test]
+        public void DmxModuleBase_HasNoQuickActionsByDefault()
+        {
+            var root = CreateGameObject("Fixture");
+            var passthrough = root.AddComponent<TestModuleWithoutQuickActions>();
+
+            Assert.That(passthrough.GetQuickActionDefinitions(), Is.Empty);
+            Assert.That(
+                passthrough.TryBuildQuickAction(DmxQuickActionIds.Blackout, new List<DmxQuickActionOverride>()),
+                Is.False);
+        }
+
+        [Test]
+        public void DimmerModule_ExposesBlackoutAndFullQuickActions()
+        {
+            var root = CreateGameObject("Fixture");
+            var dimmer = root.AddComponent<DimmerModule>();
+
+            var quickActions = dimmer.GetQuickActionDefinitions().ToArray();
+
+            Assert.That(quickActions.Select(action => action.Id), Is.EqualTo(new[]
+            {
+                DmxQuickActionIds.Blackout,
+                DmxQuickActionIds.Full
+            }));
+            Assert.That(quickActions.Select(action => action.Label), Is.EqualTo(new[]
+            {
+                "Blackout",
+                "Full"
+            }));
+        }
+
+        [Test]
+        public void DimmerModule_BuildsExpectedQuickActionOverrides()
+        {
+            var root = CreateGameObject("Fixture");
+            var dimmer = root.AddComponent<DimmerModule>();
+
+            var blackout = new List<DmxQuickActionOverride>();
+            var full = new List<DmxQuickActionOverride>();
+
+            Assert.That(dimmer.TryBuildQuickAction(DmxQuickActionIds.Blackout, blackout), Is.True);
+            Assert.That(dimmer.TryBuildQuickAction(DmxQuickActionIds.Full, full), Is.True);
+            Assert.That(dimmer.TryBuildQuickAction("unknown", new List<DmxQuickActionOverride>()), Is.False);
+
+            Assert.That(blackout.Count, Is.EqualTo(1));
+            Assert.That(blackout[0].RelativeChannel, Is.EqualTo(0));
+            Assert.That(blackout[0].Value, Is.EqualTo((byte)0));
+
+            Assert.That(full.Count, Is.EqualTo(1));
+            Assert.That(full[0].RelativeChannel, Is.EqualTo(0));
+            Assert.That(full[0].Value, Is.EqualTo(byte.MaxValue));
+        }
+
+        [Test]
+        public void ColorModule_BuildsExpectedQuickActionOverrides()
+        {
+            var root = CreateGameObject("Fixture");
+            var color = root.AddComponent<ColorModule>();
+
+            var blackout = new List<DmxQuickActionOverride>();
+            var white = new List<DmxQuickActionOverride>();
+
+            Assert.That(color.TryBuildQuickAction(DmxQuickActionIds.Blackout, blackout), Is.True);
+            Assert.That(color.TryBuildQuickAction(DmxQuickActionIds.White, white), Is.True);
+
+            Assert.That(blackout.Select(x => x.RelativeChannel), Is.EqualTo(new[] { 0, 1, 2 }));
+            Assert.That(blackout.Select(x => x.Value), Is.EqualTo(new byte[] { 0, 0, 0 }));
+            Assert.That(white.Select(x => x.RelativeChannel), Is.EqualTo(new[] { 0, 1, 2 }));
+            Assert.That(white.Select(x => x.Value), Is.EqualTo(new[] { byte.MaxValue, byte.MaxValue, byte.MaxValue }));
+        }
+
+        [Test]
+        public void PanTiltModule_CenterQuickAction_UsesExpectedChannels()
+        {
+            var root = CreateGameObject("Fixture");
+            var panTilt = root.AddComponent<PanTiltModule>();
+
+            var overrides = new List<DmxQuickActionOverride>();
+
+            Assert.That(panTilt.TryBuildQuickAction(DmxQuickActionIds.Center, overrides), Is.True);
+            Assert.That(overrides.Select(x => x.RelativeChannel), Is.EqualTo(new[] { 0, 1, 2, 3 }));
+            Assert.That(overrides.Select(x => x.Value), Is.EqualTo(new byte[] { 128, 0, 128, 0 }));
+        }
+
+        [Test]
+        public void StrobeModule_BuildsExpectedQuickActionOverrides()
+        {
+            var root = CreateGameObject("Fixture");
+            var strobe = root.AddComponent<StrobeModule>();
+
+            var stop = new List<DmxQuickActionOverride>();
+            var full = new List<DmxQuickActionOverride>();
+
+            Assert.That(strobe.TryBuildQuickAction(DmxQuickActionIds.Stop, stop), Is.True);
+            Assert.That(strobe.TryBuildQuickAction(DmxQuickActionIds.Full, full), Is.True);
+            Assert.That(stop.Count, Is.EqualTo(1));
+            Assert.That(stop[0].RelativeChannel, Is.EqualTo(0));
+            Assert.That(stop[0].Value, Is.EqualTo((byte)15));
+            Assert.That(full.Count, Is.EqualTo(1));
+            Assert.That(full[0].Value, Is.EqualTo(byte.MaxValue));
+        }
+
+        [Test]
+        public void GoboModule_BuildsOpenAndStopQuickActionOverrides()
+        {
+            var root = CreateGameObject("Fixture");
+            var gobo = root.AddComponent<GoboModule>();
+            gobo.Configure(4, true, 7, 180f);
+
+            var open = new List<DmxQuickActionOverride>();
+            var stop = new List<DmxQuickActionOverride>();
+
+            Assert.That(gobo.TryBuildQuickAction(DmxQuickActionIds.Open, open), Is.True);
+            Assert.That(gobo.TryBuildQuickAction(DmxQuickActionIds.Stop, stop), Is.True);
+            Assert.That(open.Count, Is.EqualTo(1));
+            Assert.That(open[0].RelativeChannel, Is.EqualTo(0));
+            Assert.That(open[0].Value, Is.EqualTo((byte)7));
+            Assert.That(stop.Count, Is.EqualTo(1));
+            Assert.That(stop[0].RelativeChannel, Is.EqualTo(1));
+            Assert.That(stop[0].Value, Is.EqualTo((byte)127));
+        }
+
+        [Test]
+        public void FunctionChannelModule_ResetQuickAction_UsesResetRangeMidpoint()
+        {
+            var root = CreateGameObject("Fixture");
+            var function = root.AddComponent<FunctionChannelModule>();
+            function.Configure(new[]
+            {
+                new FunctionChannelModule.FunctionRange
+                {
+                    label = "Reset",
+                    min = 200,
+                    max = 255,
+                    action = FunctionChannelModule.FunctionAction.ResetFixture
+                }
+            }, true);
+
+            var overrides = new List<DmxQuickActionOverride>();
+
+            Assert.That(function.TryBuildQuickAction(DmxQuickActionIds.Reset, overrides), Is.True);
+            Assert.That(overrides.Count, Is.EqualTo(1));
+            Assert.That(overrides[0].RelativeChannel, Is.EqualTo(0));
+            Assert.That(overrides[0].Value, Is.EqualTo((byte)227));
         }
 
         [Test]
@@ -264,6 +413,94 @@ namespace Tests.Devices.Module
         }
 
         [Test]
+        public void RendererPropertyBlockOutput_AppliesColorAndDimmerToEveryMaterialSlot()
+        {
+            var root = CreateGameObject("Fixture");
+            var renderer = CreateGameObject("Renderer").AddComponent<MeshRenderer>();
+            renderer.transform.SetParent(root.transform, false);
+            renderer.sharedMaterials = new[]
+            {
+                new Material(Shader.Find("Standard")),
+                new Material(Shader.Find("Standard"))
+            };
+            _createdObjects.Add(renderer.sharedMaterials[0]);
+            _createdObjects.Add(renderer.sharedMaterials[1]);
+
+            var fixture = root.AddComponent<DmxFixture>();
+            var color = root.AddComponent<ColorModule>();
+            var dimmer = root.AddComponent<DimmerModule>();
+            var output = root.AddComponent<RendererPropertyBlockOutput>();
+            output.Configure(new Renderer[] { renderer }, "_DmxColor", "_DmxDimmer");
+
+            fixture.SetModules(new[]
+            {
+                fixture.CreateEntry(color, 0),
+                fixture.CreateEntry(dimmer, 3)
+            });
+            fixture.SetOutputs(new FixtureOutputBase[] { output });
+
+            InitializeFixture(fixture);
+            fixture.DmxUpdate(new byte[] { 255, 128, 64, 32 });
+
+            var colorPropertyId = Shader.PropertyToID("_DmxColor");
+            var dimmerPropertyId = Shader.PropertyToID("_DmxDimmer");
+            var block = new MaterialPropertyBlock();
+
+            renderer.GetPropertyBlock(block, 0);
+            Assert.That(block.GetColor(colorPropertyId).g, Is.EqualTo(128f / 255f).Within(0.001f));
+            Assert.That(block.GetFloat(dimmerPropertyId), Is.EqualTo(32f / 255f).Within(0.001f));
+
+            renderer.GetPropertyBlock(block, 1);
+            Assert.That(block.GetColor(colorPropertyId).b, Is.EqualTo(64f / 255f).Within(0.001f));
+            Assert.That(block.GetFloat(dimmerPropertyId), Is.EqualTo(32f / 255f).Within(0.001f));
+        }
+
+        [Test]
+        public void RendererPropertyBlockOutput_AppliesColorAndDimmerOnlyToConfiguredMaterialSlots()
+        {
+            var root = CreateGameObject("Fixture");
+            var renderer = CreateGameObject("Renderer").AddComponent<MeshRenderer>();
+            renderer.transform.SetParent(root.transform, false);
+            renderer.sharedMaterials = new[]
+            {
+                new Material(Shader.Find("Standard")),
+                new Material(Shader.Find("Standard"))
+            };
+            _createdObjects.Add(renderer.sharedMaterials[0]);
+            _createdObjects.Add(renderer.sharedMaterials[1]);
+
+            var fixture = root.AddComponent<DmxFixture>();
+            var color = root.AddComponent<ColorModule>();
+            var dimmer = root.AddComponent<DimmerModule>();
+            var output = root.AddComponent<RendererPropertyBlockOutput>();
+            output.Configure(new Renderer[] { renderer }, "_DmxColor", "_DmxDimmer", new[] { 1 });
+
+            fixture.SetModules(new[]
+            {
+                fixture.CreateEntry(color, 0),
+                fixture.CreateEntry(dimmer, 3)
+            });
+            fixture.SetOutputs(new FixtureOutputBase[] { output });
+
+            InitializeFixture(fixture);
+            fixture.DmxUpdate(new byte[] { 255, 128, 64, 32 });
+
+            var colorPropertyId = Shader.PropertyToID("_DmxColor");
+            var dimmerPropertyId = Shader.PropertyToID("_DmxDimmer");
+            var block = new MaterialPropertyBlock();
+
+            renderer.GetPropertyBlock(block, 0);
+            Assert.That(block.GetColor(colorPropertyId), Is.EqualTo(default(Color)));
+            Assert.That(block.GetFloat(dimmerPropertyId), Is.EqualTo(0f).Within(0.001f));
+
+            renderer.GetPropertyBlock(block, 1);
+            Assert.That(block.GetColor(colorPropertyId).r, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(block.GetColor(colorPropertyId).g, Is.EqualTo(128f / 255f).Within(0.001f));
+            Assert.That(block.GetColor(colorPropertyId).b, Is.EqualTo(64f / 255f).Within(0.001f));
+            Assert.That(block.GetFloat(dimmerPropertyId), Is.EqualTo(32f / 255f).Within(0.001f));
+        }
+
+        [Test]
         public void FunctionChannelModule_CanRequestFixtureReset()
         {
             var root = CreateGameObject("Fixture");
@@ -377,6 +614,25 @@ namespace Tests.Devices.Module
             var field = declaringType.GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null, $"Field '{fieldName}' was not found on {declaringType.Name}.");
             field.SetValue(target, value);
+        }
+
+        private sealed class TestModuleWithoutQuickActions : DmxModuleBase
+        {
+            private static readonly IReadOnlyList<DmxChannelDescriptor> Descriptors = new[]
+            {
+                new DmxChannelDescriptor("Value", 0)
+            };
+
+            public override int ChannelCount => 1;
+
+            public override void Apply(in DmxFrame frame)
+            {
+            }
+
+            public override IReadOnlyList<DmxChannelDescriptor> GetChannelDescriptors()
+            {
+                return Descriptors;
+            }
         }
     }
 }

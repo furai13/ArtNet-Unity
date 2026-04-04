@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-namespace ArtNet.Devices.Modular
+namespace ArtNet.Devices.Modular.Output
 {
     public class LightOutput : ColorDimmerOutputBase
     {

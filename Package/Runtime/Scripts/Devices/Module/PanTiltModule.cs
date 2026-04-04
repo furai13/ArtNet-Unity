@@ -18,6 +18,10 @@ namespace ArtNet.Devices.Modular
             new DmxChannelDescriptor("Pan", 0),
             new DmxChannelDescriptor("Tilt", 1)
         };
+        private static readonly IReadOnlyList<DmxQuickActionDefinition> QuickActions = new[]
+        {
+            new DmxQuickActionDefinition(DmxQuickActionIds.Center, "Center")
+        };
 
         public override int ChannelCount => useFineChannels ? 4 : 2;
 
@@ -37,6 +41,37 @@ namespace ArtNet.Devices.Modular
         public override IReadOnlyList<DmxChannelDescriptor> GetChannelDescriptors()
         {
             return useFineChannels ? FineChannelDescriptors : CoarseChannelDescriptors;
+        }
+
+        public override IReadOnlyList<DmxQuickActionDefinition> GetQuickActionDefinitions()
+        {
+            return QuickActions;
+        }
+
+        public override bool TryBuildQuickAction(string actionId, List<DmxQuickActionOverride> overrides)
+        {
+            if (actionId != DmxQuickActionIds.Center)
+            {
+                return false;
+            }
+
+            if (useFineChannels)
+            {
+                Add16BitCenter(overrides, 0);
+                Add16BitCenter(overrides, 2);
+                return true;
+            }
+
+            overrides.Add(new DmxQuickActionOverride(0, 127));
+            overrides.Add(new DmxQuickActionOverride(1, 127));
+            return true;
+        }
+
+        private static void Add16BitCenter(List<DmxQuickActionOverride> overrides, int startChannel)
+        {
+            const ushort centerValue = 32768;
+            overrides.Add(new DmxQuickActionOverride(startChannel, (byte)(centerValue >> 8)));
+            overrides.Add(new DmxQuickActionOverride(startChannel + 1, (byte)(centerValue & 0xFF)));
         }
     }
 }

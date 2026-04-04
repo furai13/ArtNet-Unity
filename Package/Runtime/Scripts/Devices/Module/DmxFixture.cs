@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using ArtNet.Common;
+using ArtNet.Devices.Modular.Output;
 using UnityEngine;
 
 namespace ArtNet.Devices.Modular
