@@ -5,8 +5,7 @@ namespace ArtNet.Devices.Modular.Output
 {
     public class RendererPropertyBlockOutput : ColorDimmerOutputBase
     {
-        [SerializeField] private Renderer[] targetRenderers = Array.Empty<Renderer>();
-        [SerializeField] private int[] targetMaterialIndices = Array.Empty<int>();
+        [SerializeField] private RendererPropertyBlockTarget[] targets = Array.Empty<RendererPropertyBlockTarget>();
         [SerializeField] private string colorPropertyName = "_DmxColor";
         [SerializeField] private string dimmerPropertyName = "_DmxDimmer";
 
@@ -16,13 +15,22 @@ namespace ArtNet.Devices.Modular.Output
 
         protected override void OnInitialize()
         {
-            if (targetRenderers == null || targetRenderers.Length == 0)
+            if (targets == null || targets.Length == 0)
             {
                 var renderer = GetComponent<Renderer>();
-                targetRenderers = renderer != null ? new[] { renderer } : Array.Empty<Renderer>();
+                if (renderer != null)
+                {
+                    var defaultTarget = new RendererPropertyBlockTarget();
+                    defaultTarget.Configure(renderer, null);
+                    targets = new[] { defaultTarget };
+                }
+                else
+                {
+                    targets = Array.Empty<RendererPropertyBlockTarget>();
+                }
             }
 
-            _propertyBlocksPerMaterial = new MaterialPropertyBlock[targetRenderers.Length][];
+            _propertyBlocksPerMaterial = new MaterialPropertyBlock[targets.Length][];
             _colorPropertyId = string.IsNullOrWhiteSpace(colorPropertyName) ? -1 : Shader.PropertyToID(colorPropertyName);
             _dimmerPropertyId = string.IsNullOrWhiteSpace(dimmerPropertyName) ? -1 : Shader.PropertyToID(dimmerPropertyName);
 
@@ -41,17 +49,31 @@ namespace ArtNet.Devices.Modular.Output
 
         public void Configure(Renderer[] renderers, string colorProperty, string dimmerProperty, int[] materialIndices = null)
         {
-            targetRenderers = renderers ?? Array.Empty<Renderer>();
-            targetMaterialIndices = materialIndices ?? Array.Empty<int>();
+            if (renderers == null || renderers.Length == 0)
+            {
+                targets = Array.Empty<RendererPropertyBlockTarget>();
+            }
+            else
+            {
+                targets = new RendererPropertyBlockTarget[renderers.Length];
+                for (var i = 0; i < renderers.Length; i++)
+                {
+                    var target = new RendererPropertyBlockTarget();
+                    target.Configure(renderers[i], materialIndices);
+                    targets[i] = target;
+                }
+            }
+
             colorPropertyName = colorProperty ?? string.Empty;
             dimmerPropertyName = dimmerProperty ?? string.Empty;
         }
 
         protected override void ApplyColorDimmer(Color color, float dimmer)
         {
-            for (var i = 0; i < targetRenderers.Length; i++)
+            for (var i = 0; i < targets.Length; i++)
             {
-                var targetRenderer = targetRenderers[i];
+                var target = targets[i];
+                var targetRenderer = target?.Renderer;
                 if (targetRenderer == null)
                 {
                     continue;
@@ -66,7 +88,8 @@ namespace ArtNet.Devices.Modular.Output
                     _propertyBlocksPerMaterial[i] = propertyBlocks;
                 }
 
-                if (targetMaterialIndices == null || targetMaterialIndices.Length == 0)
+                var materialSlots = target.MaterialSlots;
+                if (materialSlots == null || materialSlots.AppliesToAllMaterials)
                 {
                     for (var materialIndex = 0; materialIndex < materialCount; materialIndex++)
                     {
@@ -75,9 +98,10 @@ namespace ArtNet.Devices.Modular.Output
                     continue;
                 }
 
-                for (var targetIndex = 0; targetIndex < targetMaterialIndices.Length; targetIndex++)
+                var materialIndices = materialSlots.Indices;
+                for (var targetIndex = 0; targetIndex < materialIndices.Length; targetIndex++)
                 {
-                    var materialIndex = targetMaterialIndices[targetIndex];
+                    var materialIndex = materialIndices[targetIndex];
                     if (materialIndex < 0 || materialIndex >= materialCount)
                     {
                         continue;

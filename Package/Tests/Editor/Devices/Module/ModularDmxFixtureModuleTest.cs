@@ -501,6 +501,43 @@ namespace Tests.Devices.Module
         }
 
         [Test]
+        public void MaterialSlotTarget_EmptyIndicesFallbackToAllMaterials()
+        {
+            var target = new MaterialSlotTarget();
+
+            target.SetIndices(System.Array.Empty<int>());
+
+            Assert.That(target.AppliesToAllMaterials, Is.True);
+            Assert.That(target.Mode, Is.EqualTo(MaterialSlotTarget.TargetMode.AllMaterials));
+            Assert.That(target.Indices, Is.Empty);
+        }
+
+        [Test]
+        public void MaterialSlotTarget_StoresSpecificIndicesWhenConfigured()
+        {
+            var target = new MaterialSlotTarget();
+
+            target.SetIndices(new[] { 1, 3 });
+
+            Assert.That(target.AppliesToAllMaterials, Is.False);
+            Assert.That(target.Mode, Is.EqualTo(MaterialSlotTarget.TargetMode.SpecificIndices));
+            Assert.That(target.Indices, Is.EqualTo(new[] { 1, 3 }));
+        }
+
+        [Test]
+        public void RendererPropertyBlockTarget_StoresRendererAndMaterialSlots()
+        {
+            var renderer = CreateGameObject("Renderer").AddComponent<MeshRenderer>();
+            var target = new RendererPropertyBlockTarget();
+
+            target.Configure(renderer, new[] { 2 });
+
+            Assert.That(target.Renderer, Is.SameAs(renderer));
+            Assert.That(target.MaterialSlots.AppliesToAllMaterials, Is.False);
+            Assert.That(target.MaterialSlots.Indices, Is.EqualTo(new[] { 2 }));
+        }
+
+        [Test]
         public void FunctionChannelModule_CanRequestFixtureReset()
         {
             var root = CreateGameObject("Fixture");
