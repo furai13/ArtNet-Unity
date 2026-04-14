@@ -1,0 +1,10 @@
+Scene: Assets/Samples/ArtNet-Unity/0.2.0/Receive Art-Net packet/Scenes/LightingPlannerExportValidation.unity
+ExportFolder: D:\Project\ArtNet-Unity\Dev\Assets\StreamingAssets\Samples\lighting_planner_export_validation
+Fixtures: 3
+Warnings: 0
+Has validation fixture type: True
+Has Rear Wash role: True
+Has Front Key role: True
+Has dimmer/color/strobe channels: True
+Manifest points to rig/intent: True
+Intent template looks valid: True

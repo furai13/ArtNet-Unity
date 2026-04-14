@@ -40,7 +40,7 @@ namespace ArtNet
         public void OnEnable()
         {
             DmxDevices = FindDmxDevices();
-            if (_artNetReceiver == null) _artNetReceiver = FindObjectOfType<ArtNetReceiver>();
+            if (_artNetReceiver == null) _artNetReceiver = UnityEngine.Object.FindFirstObjectByType<ArtNetReceiver>();
             if (_artNetReceiver != null) _artNetReceiver.OnReceivedDmx += ReceivedDmxPacket;
         }
 
@@ -51,7 +51,7 @@ namespace ArtNet
 
         private static Dictionary<ushort, IEnumerable<IDmxDevice>> FindDmxDevices()
         {
-            return FindObjectsOfType<GameObject>().SelectMany(o => o.GetComponents<IDmxDevice>())
+            return UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None).SelectMany(o => o.GetComponents<IDmxDevice>())
                 .GroupBy(device => device.Universe).ToDictionary(g => g.Key, g => g as IEnumerable<IDmxDevice>);
         }
 

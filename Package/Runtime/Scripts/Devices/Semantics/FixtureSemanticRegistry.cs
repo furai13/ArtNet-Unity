@@ -9,7 +9,7 @@ namespace ArtNet.Devices.Semantics
     {
         public static IReadOnlyList<FixtureSemanticBinding> FindBindings(bool includeInactive = true)
         {
-            return Object.FindObjectsOfType<FixtureSemanticBinding>(includeInactive)
+            return UnityEngine.Object.FindObjectsOfType<FixtureSemanticBinding>(includeInactive)
                 .Where(binding => binding != null && binding.Fixture != null)
                 .OrderBy(binding => binding.name)
                 .ToArray();

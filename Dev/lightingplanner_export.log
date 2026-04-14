@@ -1,0 +1,22 @@
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.3/staging' branch; Version is '6000.3.11f1 (3000ef702840) revision 3145967'; Using compiler version '194234433'; Build Type 'Release'
+OS: 'Windows 11  (10.0.26200) Core' Language: 'ja' Physical Memory: 65325 MB
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-furai" at "2026-04-14T19:06:44.8297244Z"
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-04-14T19:06:44Z
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.3.11f1\Editor\Unity.exe
+-batchmode
+-quit
+-projectPath
+D:\Project\ArtNet-Unity\Dev
+-executeMethod
+ArtNet.Editor.LightingPlannerExportValidationBatch.ExportValidationScene
+-logFile
+D:\Project\ArtNet-Unity\Dev\lightingplanner_export.log
+Successfully changed project path to: D:\Project\ArtNet-Unity\Dev
+D:/Project/ArtNet-Unity/Dev
+Exiting without the bug reporter. Application will terminate with return code 1

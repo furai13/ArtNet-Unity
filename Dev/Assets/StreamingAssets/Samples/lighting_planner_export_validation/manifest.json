@@ -1,0 +1,9 @@
+{
+    "schemaVersion": "1.0.0",
+    "packageId": "lightingplannerexportvalidation",
+    "title": "LightingPlannerExportValidation",
+    "createdAt": "2026-04-15T03:56:12.8344376+09:00",
+    "rigFile": "rig.json",
+    "intentFile": "intent.json",
+    "rigId": "lightingplannerexportvalidation"
+}

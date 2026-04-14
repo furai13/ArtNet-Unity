@@ -1,0 +1,212 @@
+{
+    "schemaVersion": "1.0.0",
+    "rigId": "lightingplannerexportvalidation",
+    "coordinateSystem": {
+        "space": "unity",
+        "unit": "meter",
+        "handedness": "left"
+    },
+    "addressing": {
+        "universeBase": 0,
+        "addressBase": 0,
+        "maxChannelsPerUniverse": 512
+    },
+    "fixtureTypes": [
+        {
+            "fixtureTypeId": "eee_1ch",
+            "displayName": "eee",
+            "channelFootprint": 1,
+            "capabilities": [
+                "Dimmer"
+            ],
+            "channels": [
+                {
+                    "offset": 0,
+                    "functionId": "dimmer",
+                    "label": "Dimmer",
+                    "resolution": "8bit",
+                    "pairKey": ""
+                }
+            ]
+        },
+        {
+            "fixtureTypeId": "validation_led_wash_rgb_strobe_5ch",
+            "displayName": "Validation LED Wash RGB Strobe",
+            "channelFootprint": 5,
+            "capabilities": [
+                "Dimmer",
+                "Color",
+                "Strobe"
+            ],
+            "channels": [
+                {
+                    "offset": 0,
+                    "functionId": "dimmer",
+                    "label": "Dimmer",
+                    "resolution": "8bit",
+                    "pairKey": ""
+                },
+                {
+                    "offset": 1,
+                    "functionId": "color.red",
+                    "label": "Red",
+                    "resolution": "8bit",
+                    "pairKey": ""
+                },
+                {
+                    "offset": 2,
+                    "functionId": "color.green",
+                    "label": "Green",
+                    "resolution": "8bit",
+                    "pairKey": ""
+                },
+                {
+                    "offset": 3,
+                    "functionId": "color.blue",
+                    "label": "Blue",
+                    "resolution": "8bit",
+                    "pairKey": ""
+                },
+                {
+                    "offset": 4,
+                    "functionId": "strobe",
+                    "label": "Strobe",
+                    "resolution": "8bit",
+                    "pairKey": ""
+                }
+            ]
+        }
+    ],
+    "fixtures": [
+        {
+            "fixtureId": "gameobject",
+            "fixtureTypeId": "eee_1ch",
+            "name": "GameObject",
+            "patch": {
+                "universe": 4,
+                "startAddress": 0
+            },
+            "transform": {
+                "position": [
+                    0.0,
+                    0.0,
+                    0.0
+                ],
+                "rotationEuler": [
+                    0.0,
+                    0.0,
+                    0.0
+                ]
+            },
+            "semantics": {
+                "primaryRole": "",
+                "secondaryRoles": [],
+                "roles": [],
+                "capabilities": [],
+                "tags": [],
+                "exclusionTags": [],
+                "properties": [],
+                "priority": 0.5
+            }
+        },
+        {
+            "fixtureId": "validation_stage_front_key_r_01",
+            "fixtureTypeId": "validation_led_wash_rgb_strobe_5ch",
+            "name": "Front Key R 01",
+            "patch": {
+                "universe": 0,
+                "startAddress": 10
+            },
+            "transform": {
+                "position": [
+                    3.5,
+                    4.0,
+                    -5.0
+                ],
+                "rotationEuler": [
+                    20.000003814697267,
+                    0.0,
+                    0.0
+                ]
+            },
+            "semantics": {
+                "primaryRole": "KeyLight",
+                "secondaryRoles": [
+                    "FrontLight"
+                ],
+                "roles": [
+                    "KeyLight",
+                    "FrontLight"
+                ],
+                "capabilities": [
+                    "dimmer",
+                    "color",
+                    "rgb",
+                    "strobe"
+                ],
+                "tags": [
+                    "focus",
+                    "face"
+                ],
+                "exclusionTags": [],
+                "properties": [
+                    {
+                        "key": "stageZone",
+                        "value": "DownStageRight"
+                    }
+                ],
+                "priority": 0.949999988079071
+            }
+        },
+        {
+            "fixtureId": "validation_stage_rear_wash_l_01",
+            "fixtureTypeId": "validation_led_wash_rgb_strobe_5ch",
+            "name": "Rear Wash L 01",
+            "patch": {
+                "universe": 0,
+                "startAddress": 0
+            },
+            "transform": {
+                "position": [
+                    -4.0,
+                    5.5,
+                    8.0
+                ],
+                "rotationEuler": [
+                    0.0,
+                    180.0,
+                    0.0
+                ]
+            },
+            "semantics": {
+                "primaryRole": "BackLight",
+                "secondaryRoles": [
+                    "Wash"
+                ],
+                "roles": [
+                    "BackLight",
+                    "Wash"
+                ],
+                "capabilities": [
+                    "dimmer",
+                    "color",
+                    "rgb",
+                    "strobe"
+                ],
+                "tags": [
+                    "silhouette"
+                ],
+                "exclusionTags": [
+                    "no_audience"
+                ],
+                "properties": [
+                    {
+                        "key": "stageZone",
+                        "value": "UpStageLeft"
+                    }
+                ],
+                "priority": 0.800000011920929
+            }
+        }
+    ]
+}
