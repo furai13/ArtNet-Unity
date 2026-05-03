@@ -130,16 +130,18 @@ namespace ArtNet.Editor
             var scene = EditorSceneManager.GetActiveScene();
             var rigId = string.IsNullOrWhiteSpace(scene.name) ? "artnet-rig" : Slugify(scene.name);
             var fixtureJsons = new List<FixtureJson>(fixtures.Count);
+            var fixtureIdsInUse = new HashSet<string>(StringComparer.Ordinal);
             foreach (var fixture in fixtures)
             {
                 bindingByFixtureId.TryGetValue(fixture.GetInstanceID(), out var binding);
                 var semanticDescriptor = binding != null ? binding.BuildDescriptor() : default;
                 var hasSemantics = binding != null;
                 var transform = fixture.transform;
+                var fixtureId = BuildUniqueFixtureId(fixture, fixtureIdsInUse);
 
                 fixtureJsons.Add(new FixtureJson
                 {
-                    fixtureId = BuildFixtureId(transform),
+                    fixtureId = fixtureId,
                     fixtureTypeId = fixtureTypeEntries[fixture.GetInstanceID()].fixtureType.fixtureTypeId,
                     name = fixture.name,
                     patch = new PatchJson
@@ -473,6 +475,30 @@ namespace ArtNet.Editor
             }
 
             return Slugify(string.Join("_", names));
+        }
+
+        private static string BuildUniqueFixtureId(DmxFixture fixture, HashSet<string> fixtureIdsInUse)
+        {
+            var baseId = BuildFixtureId(fixture.transform);
+            if (fixtureIdsInUse.Add(baseId))
+            {
+                return baseId;
+            }
+
+            var globalObjectId = GlobalObjectId.GetGlobalObjectIdSlow(fixture).ToString();
+            var hashedId = $"{baseId}_{ShortHash(globalObjectId)}";
+            if (fixtureIdsInUse.Add(hashedId))
+            {
+                return hashedId;
+            }
+
+            var suffix = 2;
+            while (!fixtureIdsInUse.Add($"{hashedId}_{suffix}"))
+            {
+                suffix++;
+            }
+
+            return $"{hashedId}_{suffix}";
         }
 
         private static float[] ToArray(Vector3 vector)
