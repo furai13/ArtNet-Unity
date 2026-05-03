@@ -30,33 +30,10 @@ namespace ArtNet.Editor
                 return;
             }
 
-            var fixtures = DmxFixtureEditorUtility.FindFixturesInScene();
-            if (fixtures.Length == 0)
-            {
-                EditorUtility.DisplayDialog("Lighting Planner Export", "No DmxFixture found in the open scene.", "OK");
-                return;
-            }
-
-            var bindingByFixtureId = FixtureSemanticRegistry.FindBindings()
-                .Where(binding => binding.Fixture != null)
-                .GroupBy(binding => binding.Fixture.GetInstanceID())
-                .ToDictionary(group => group.Key, group => group.First());
-
-            var warnings = new List<string>();
-            var fixtureTypeEntries = BuildFixtureTypeEntries(fixtures, warnings);
-            var rig = BuildRigExport(fixtures, fixtureTypeEntries, bindingByFixtureId);
-            var manifest = BuildManifest(scene, rig);
-            var intent = BuildIntentTemplate(scene, rig);
-
-            Directory.CreateDirectory(exportFolder);
-            WriteJson(Path.Combine(exportFolder, "manifest.json"), manifest);
-            WriteJson(Path.Combine(exportFolder, "rig.json"), rig);
-            WriteJson(Path.Combine(exportFolder, "intent.json"), intent);
-
-            AssetDatabase.Refresh();
+            var (fixtureCount, fixtureTypeCount, warnings) = ExportToFolder(exportFolder);
 
             var message = new StringBuilder()
-                .AppendLine($"Exported {rig.fixtures.Length} fixtures and {rig.fixtureTypes.Length} fixture types.")
+                .AppendLine($"Exported {fixtureCount} fixtures and {fixtureTypeCount} fixture types.")
                 .AppendLine(exportFolder);
 
             if (warnings.Count > 0)
@@ -70,6 +47,37 @@ namespace ArtNet.Editor
             }
 
             EditorUtility.DisplayDialog("Lighting Planner Export", message.ToString(), "OK");
+        }
+
+        internal static (int fixtureCount, int fixtureTypeCount, List<string> warnings) ExportToFolder(
+            string exportFolder)
+        {
+            var fixtures = DmxFixtureEditorUtility.FindFixturesInScene();
+            if (fixtures.Length == 0)
+            {
+                return (0, 0, new List<string>());
+            }
+
+            var bindingByFixtureId = FixtureSemanticRegistry.FindBindings()
+                .Where(binding => binding.Fixture != null)
+                .GroupBy(binding => binding.Fixture.GetInstanceID())
+                .ToDictionary(group => group.Key, group => group.First());
+
+            var scene = EditorSceneManager.GetActiveScene();
+            var warnings = new List<string>();
+            var fixtureTypeEntries = BuildFixtureTypeEntries(fixtures, warnings);
+            var rig = BuildRigExport(fixtures, fixtureTypeEntries, bindingByFixtureId);
+            var manifest = BuildManifest(scene, rig);
+            var intent = BuildIntentTemplate(scene, rig);
+
+            Directory.CreateDirectory(exportFolder);
+            WriteJson(Path.Combine(exportFolder, "manifest.json"), manifest);
+            WriteJson(Path.Combine(exportFolder, "rig.json"), rig);
+            WriteJson(Path.Combine(exportFolder, "intent.json"), intent);
+
+            AssetDatabase.Refresh();
+
+            return (rig.fixtures.Length, rig.fixtureTypes.Length, warnings);
         }
 
         private static ManifestJson BuildManifest(UnityEngine.SceneManagement.Scene scene, RigJson rig)
