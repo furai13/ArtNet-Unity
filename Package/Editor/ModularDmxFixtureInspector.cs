@@ -73,6 +73,11 @@ namespace ArtNet.Editor
                 }
 
                 var dmxData = fixture.CurrentDmxData;
+                using (new EditorGUI.DisabledScope(true))
+                {
+                    EditorGUILayout.TextField("Last Received", FormatLastReceivedTime(fixture));
+                }
+
                 if (dmxData.IsEmpty)
                 {
                     EditorGUILayout.HelpBox(
@@ -193,6 +198,17 @@ namespace ArtNet.Editor
             }
 
             return string.Join(", ", values);
+        }
+
+        private static string FormatLastReceivedTime(DmxFixture fixture)
+        {
+            if (!fixture.HasReceivedDmx)
+            {
+                return "Never";
+            }
+
+            var secondsAgo = Mathf.Max(0f, fixture.SecondsSinceLastReceived);
+            return $"{secondsAgo:0.000}s ago  (realtime {fixture.LastReceivedRealtimeSinceStartup:0.000}s)";
         }
 
         private void DrawStateSection(DmxFixture fixture)
