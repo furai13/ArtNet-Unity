@@ -19,6 +19,7 @@ namespace ArtNet.Editor
         [SerializeField] private string _receiverStatus;
         [SerializeField] private string _lastReceived;
         [SerializeField] private string _lastOpCode;
+        [SerializeField] private string _localBindAddress = "0.0.0.0";
         private readonly Dictionary<ushort, byte[]> _dmxData = new();
 
         private readonly UdpReceiver _receiver = new(ArtNetReceiver.ArtNetPort);
@@ -118,6 +119,9 @@ namespace ArtNet.Editor
 
         private void StartReceive()
         {
+            _receiver.LocalAddress = IPAddress.TryParse(_localBindAddress, out var address)
+                ? address
+                : IPAddress.Any;
             _receiver.StartReceive();
             _receiverStatus = "Running";
             _receiveStartButton.text = "Stop Receive ArtNet Packet";

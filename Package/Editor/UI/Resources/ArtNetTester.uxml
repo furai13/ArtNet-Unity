@@ -5,6 +5,7 @@
         <ui:VisualElement class="row-panel">
             <ui:VisualElement class="status-panel">
                 <ui:TextField label="Receiver Status" readonly="true" focusable="false" binding-path="_receiverStatus"/>
+                <ui:TextField label="Local Bind Address" binding-path="_localBindAddress"/>
                 <ui:TextField label="Last Received At" readonly="true" focusable="false" binding-path="_lastReceived"/>
                 <ui:TextField label="Last OP Code" readonly="true" focusable="false" binding-path="_lastOpCode"/>
             </ui:VisualElement>

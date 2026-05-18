@@ -30,6 +30,8 @@ namespace ArtNet.Devices.Modular
         public string GroupId => groupId;
         public IReadOnlyList<ModuleEntry> Modules => modules;
         public IReadOnlyList<FixtureOutputBase> Outputs => outputs;
+        public ReadOnlySpan<byte> CurrentDmxData =>
+            DmxData == null ? ReadOnlySpan<byte>.Empty : DmxData.AsSpan(0, Mathf.Min(ChannelNumber, DmxData.Length));
         public int ChannelFootprint => modules.Where(entry => entry.module != null)
             .Select(entry => entry.offset + entry.module.ChannelCount)
             .DefaultIfEmpty(0)

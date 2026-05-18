@@ -64,6 +64,7 @@ namespace ArtNet
         private const int DefaultReceiveBufferSizeKb = UdpReceiver.DefaultReceiveBufferSizeKB;
 
         [SerializeField] private bool _autoStart = true;
+        [SerializeField] private string _localBindAddress = "0.0.0.0";
         [SerializeField, Min(MinimumReceiveBufferSizeKb)] private int _receiveBufferSizeKb = DefaultReceiveBufferSizeKb;
         [SerializeField] private bool _invokeUnityEventWhenCSharpEventSubscribed;
         [SerializeField] private OnReceivedPollEvent _onReceivedPollEvent;
@@ -93,6 +94,7 @@ namespace ArtNet
 
         private void Awake()
         {
+            ApplyLocalBindAddress();
             ApplyReceiveBufferSize();
             UdpReceiver.OnReceivedPacket = OnReceivedPacket;
         }
@@ -109,8 +111,16 @@ namespace ArtNet
 
         private void OnValidate()
         {
+            ApplyLocalBindAddress();
             _receiveBufferSizeKb = Mathf.Max(MinimumReceiveBufferSizeKb, _receiveBufferSizeKb);
             ApplyReceiveBufferSize();
+        }
+
+        private void ApplyLocalBindAddress()
+        {
+            UdpReceiver.LocalAddress = IPAddress.TryParse(_localBindAddress, out var address)
+                ? address
+                : IPAddress.Any;
         }
 
         private void ApplyReceiveBufferSize()

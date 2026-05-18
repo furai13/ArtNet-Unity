@@ -17,6 +17,7 @@ namespace ArtNet
         private byte[] _receiveBuffer = new byte[1500];
 
         public int Port { get; }
+        public IPAddress LocalAddress { get; set; } = IPAddress.Any;
         public int ReceiveBufferSizeBytes { get; set; } = DefaultReceiveBufferSizeKB * 1024;
         public bool IsRunning => _task is { IsCanceled: false, IsCompleted: false };
 
@@ -47,9 +48,10 @@ namespace ArtNet
             try
             {
                 _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+                _socket.ExclusiveAddressUse = false;
                 _socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
                 _socket.ReceiveBufferSize = Math.Max(1024, ReceiveBufferSizeBytes);
-                _socket.Bind(new IPEndPoint(IPAddress.Any, Port));
+                _socket.Bind(new IPEndPoint(LocalAddress ?? IPAddress.Any, Port));
 
                 _cancellationTokenSource = new CancellationTokenSource();
                 _task = Task.Run(() => UdpTaskAsync(_cancellationTokenSource.Token));
@@ -63,7 +65,7 @@ namespace ArtNet
 
         private async Task UdpTaskAsync(CancellationToken token)
         {
-            ArtNetLogger.LogInfo("ArtNetReceiver", $"UDP Receive task start. port: {Port}");
+            ArtNetLogger.LogInfo("ArtNetReceiver", $"UDP Receive task start. address: {LocalAddress}, port: {Port}");
 
             while (!token.IsCancellationRequested && _socket != null)
             {

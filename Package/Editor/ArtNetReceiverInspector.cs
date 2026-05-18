@@ -58,6 +58,14 @@ namespace ArtNet.Editor
             GUILayout.Label("Receive Settings", EditorStyles.boldLabel);
             var autoStart = serializedObject.FindProperty("_autoStart");
             if (autoStart != null) EditorGUILayout.PropertyField(autoStart, new GUIContent("Auto Start"));
+            var localBindAddress = serializedObject.FindProperty("_localBindAddress");
+            if (localBindAddress != null)
+            {
+                EditorGUILayout.PropertyField(
+                    localBindAddress,
+                    new GUIContent("Local Bind Address", "Use 0.0.0.0 for all IPv4 interfaces, or 127.0.0.1 for loopback-only Art-Net.")
+                );
+            }
             var receiveBufferSizeKb = serializedObject.FindProperty("_receiveBufferSizeKb");
             if (receiveBufferSizeKb != null)
             {
