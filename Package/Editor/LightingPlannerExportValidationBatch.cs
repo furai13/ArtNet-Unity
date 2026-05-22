@@ -37,13 +37,15 @@ namespace ArtNet.Editor
             var manifestJson = File.ReadAllText(Path.Combine(exportFolder, "manifest.json"));
             var rigJson      = File.ReadAllText(Path.Combine(exportFolder, "rig.json"));
             var intentJson   = File.ReadAllText(Path.Combine(exportFolder, "intent.json"));
+            var timelineJson = File.ReadAllText(Path.Combine(exportFolder, "timeline.json"));
 
             var hasValidationFixtureType   = rigJson.Contains("Validation LED Wash RGB Strobe", StringComparison.Ordinal);
             var hasRearWashRole            = rigJson.Contains("BackLight", StringComparison.Ordinal);
             var hasFrontKeyRole            = rigJson.Contains("KeyLight", StringComparison.Ordinal);
             var hasExpectedChannels        = ContainsAll(rigJson, "dimmer", "color.red", "color.green", "color.blue", "strobe");
-            var manifestPointsToRigAndIntent = ContainsAll(manifestJson, "\"rigFile\": \"rig.json\"", "\"intentFile\": \"intent.json\"");
+            var manifestPointsToRigIntentAndTimeline = ContainsAll(manifestJson, "\"rigFile\": \"rig.json\"", "\"intentFile\": \"intent.json\"", "\"timelineFile\": \"timeline.json\"");
             var intentLooksValid           = ContainsAll(intentJson, "\"schemaVersion\": \"1.0.0\"", "\"bpm\": 120.0", "\"sections\": []");
+            var timelineTemplateValid      = ContainsAll(timelineJson, "\"schemaVersion\": \"1.0.0\"", "\"events\": []", "\"effects\": []");
 
             var report = new StringBuilder();
             report.AppendLine($"Scene: {ScenePath}");
@@ -54,8 +56,9 @@ namespace ArtNet.Editor
             report.AppendLine($"Has Rear Wash role: {hasRearWashRole}");
             report.AppendLine($"Has Front Key role: {hasFrontKeyRole}");
             report.AppendLine($"Has dimmer/color/strobe channels: {hasExpectedChannels}");
-            report.AppendLine($"Manifest points to rig/intent: {manifestPointsToRigAndIntent}");
+            report.AppendLine($"Manifest points to rig/intent/timeline: {manifestPointsToRigIntentAndTimeline}");
             report.AppendLine($"Intent template looks valid: {intentLooksValid}");
+            report.AppendLine($"Timeline template valid: {timelineTemplateValid}");
 
             File.WriteAllText(
                 Path.Combine(exportFolder, "validation_report.txt"),

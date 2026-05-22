@@ -7,9 +7,9 @@ The exporter writes the following files:
 - `manifest.json`
 - `rig.json`
 - `intent.json`
+- `timeline.json`
 
-`timeline.json` is intentionally not part of the exported package contract at this time.
-If planner-side tools need timeline or cue data, that data should remain a planner-owned sidecar file until a stable interchange format is defined.
+`timeline.json` is exported as an additive timeline sidecar. ArtNet-Unity writes an empty, schema-compatible timeline template; Lighting Planner owns the generated looks, cue assignment, events, effects, and approval state after import.
 
 The purpose of this package is to share fixture layout, DMX patch data, and planning context in a format that is easy for the planner application to consume.
 
@@ -42,34 +42,12 @@ This avoids duplicating channel definitions for every fixture instance.
 
 ## timeline.json Position
 
-`timeline.json` should remain a planner-specific sidecar, not a formal export target, for the current exporter design.
+`timeline.json` is a first-class, optional manifest-referenced file. It is intentionally additive:
 
-Reasoning based on the current implementation:
-
-- `manifest.json` only references `rig.json` and `intent.json`
-- the exporter generates static rig data plus an intent template, but no timeline authoring data
-- validation samples and the fixed-folder validation flow assert only the three exported files
-- planner-side timeline generation is explicitly part of the planner responsibility split
-
-Promoting `timeline.json` to a first-class exported file now would create a contract without a stable source of truth in ArtNet-Unity.
-That would force downstream consumers to distinguish between a real timeline, an empty placeholder, and planner-private metadata, which is not modeled today.
-
-## Sidecar Compatibility Policy
-
-Planner-specific sidecar files are allowed to live next to the exported package, but they are outside the ArtNet-Unity package contract unless referenced by `manifest.json`.
-
-Current policy:
-
-- package consumers must treat `manifest.json`, `rig.json`, and `intent.json` as the only required files
-- unreferenced extra files such as `timeline.json` must be treated as optional and ignored by generic importers
-- planner-specific sidecars may evolve independently without requiring an ArtNet-Unity schema bump
-
-If `timeline.json` is standardized later, add it additively:
-
-- introduce a new manifest field such as `timelineFile`
-- keep existing packages valid when that field is absent
-- treat the absence of `timelineFile` as "no standardized timeline included"
-- avoid changing the meaning of existing `rig.json` or `intent.json` fields to backfill timeline semantics
+- existing packages remain valid when `timelineFile` is absent
+- ArtNet-Unity exports a blank template because it is the rig source of truth, not the show authoring source of truth
+- Lighting Planner may replace the template with generated looks, section cues, audio-reactive events, and phaser-like effects
+- runtime DMX transport remains Art-Net; `timeline.json` is static planning and preprocessing data
 
 ## manifest.json
 
@@ -85,6 +63,7 @@ If `timeline.json` is standardized later, add it additively:
 | `createdAt`     | string | Export timestamp in ISO 8601     |
 | `rigFile`       | string | Rig definition file name         |
 | `intentFile`    | string | Intent definition file name      |
+| `timelineFile`  | string | Optional timeline file name      |
 | `rigId`         | string | Referenced rig identifier        |
 
 ## rig.json
@@ -166,12 +145,23 @@ Typical values include:
 - `color.white`
 - `color.amber`
 - `color.uv`
+- `color.cyan`
+- `color.magenta`
+- `color.yellow`
 - `color.wheel`
-- `gobo.select`
-- `gobo.rotate`
+- `gobo`
+- `gobo.rotation`
+- `iris`
+- `frost`
+- `prism`
+- `speed`
 - `control`
 - `value`
 - `unknown.*`
+
+`DirectValueModule` can export a planner-facing `functionId` for fixture-specific channels that do not have a dedicated Unity module.
+Use this for normalized 0..1 control channels such as `iris`, `frost`, `prism`, `speed`, or custom `value` channels.
+When no planner function ID is set, `DirectValueModule` exports `value` for backwards compatibility.
 
 #### fixtureTypeId generation
 
@@ -248,6 +238,53 @@ When `FixtureSemanticBinding` is present, its resolved data is exported here.
 | `maxBrightness`         | float | Global brightness ceiling      |
 | `maxMotionDensity`      | float | Motion density ceiling         |
 
+## timeline.json
+
+`timeline.json` is exported as an empty template and can later be replaced by Lighting Planner.
+
+### Top-level structure
+
+| Name            | Type     | Description                                      |
+|-----------------|----------|--------------------------------------------------|
+| `schemaVersion` | string   | JSON schema version                              |
+| `metadata`      | object   | Source, generator, timestamp, approval metadata  |
+| `looks`         | object[] | Static look definitions                          |
+| `sectionCues`   | object[] | Section-to-look assignments and fade times       |
+| `events`        | object[] | Short one-shot timeline layers                   |
+| `effects`       | object[] | Phaser/chaser-like repeated timeline layers      |
+
+### events
+
+Events are short, time-local attribute layers. They are intended for beat hits, snare flashes, section accents, and other transient cues.
+
+| Name         | Type     | Description                                      |
+|--------------|----------|--------------------------------------------------|
+| `eventId`    | string   | Event identifier                                 |
+| `time`       | float    | Start time in seconds                            |
+| `duration`   | float    | Active duration in seconds                       |
+| `blend`      | string   | `htp`, `add`, or `replace`                       |
+| `priority`   | int      | Layer order                                      |
+| `target`     | object   | Fixture selection query                          |
+| `attributes` | object[] | `functionId` plus normalized `value` entries     |
+
+### effects
+
+Effects are repeated step sequences inspired by console phaser/chaser workflows. `phaseFrom` and `phaseTo` may be spread across selected fixtures to create offset movement.
+
+| Name           | Type     | Description                                  |
+|----------------|----------|----------------------------------------------|
+| `effectId`     | string   | Effect identifier                            |
+| `type`         | string   | Usually `phaser`                             |
+| `startTime`    | float    | Active start time in seconds                 |
+| `endTime`      | float    | Active end time in seconds                   |
+| `blend`        | string   | `htp`, `add`, or `replace`                   |
+| `target`       | object   | Fixture selection query                      |
+| `speedBpm`     | float    | Effect playback speed                        |
+| `measureBeats` | float    | Cycle length in beats                        |
+| `phaseFrom`    | float    | First fixture phase in degrees               |
+| `phaseTo`      | float    | Last fixture phase in degrees                |
+| `steps`        | object[] | Step width, transition, curve, and values     |
+
 ## Planner-side usage
 
 The intended workflow is:
@@ -256,8 +293,9 @@ The intended workflow is:
 2. Load `rig.json` and build a `fixtureTypes` dictionary
 3. Read `fixtures` for placement, patch, and semantic metadata
 4. Edit or generate `intent.json`
-5. Build channel maps from `fixtureType.channels`
-6. Convert planned looks and cues into Art-Net frames
+5. Read `timeline.json` when `manifest.timelineFile` is present
+6. Build channel maps from `fixtureType.channels`
+7. Convert planned looks, events, and effects into Art-Net frames
 
 The planner should treat `fixtureType.channels` as the source of truth for channel meaning, rather than inferring meaning from fixture instances alone.
 

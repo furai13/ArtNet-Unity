@@ -22,6 +22,7 @@ namespace ArtNet.Devices.Modular
         [SerializeField] private Vector2 inputRange = new(0f, 255f);
         [SerializeField] private Vector2 outputRange = new(0f, 1f);
         [SerializeField] private bool invokeOnlyOnChange = true;
+        [SerializeField] private string plannerFunctionId = "value";
         [SerializeField] private FloatEvent onValueChanged;
 
         private bool _hasLastValue;
@@ -37,6 +38,8 @@ namespace ArtNet.Devices.Modular
         };
 
         public override int ChannelCount => readMode == ReadMode.Byte ? 1 : 2;
+        public string PlannerFunctionId =>
+            string.IsNullOrWhiteSpace(plannerFunctionId) ? "value" : plannerFunctionId.Trim();
 
         public override void Apply(in DmxFrame frame)
         {
@@ -63,6 +66,22 @@ namespace ArtNet.Devices.Modular
             inputRange = sourceRange;
             outputRange = destinationRange;
             invokeOnlyOnChange = onlyOnChange;
+        }
+
+        public void Configure(
+            ReadMode mode,
+            Vector2 sourceRange,
+            Vector2 destinationRange,
+            bool onlyOnChange,
+            string functionId)
+        {
+            Configure(mode, sourceRange, destinationRange, onlyOnChange);
+            SetPlannerFunctionId(functionId);
+        }
+
+        public void SetPlannerFunctionId(string functionId)
+        {
+            plannerFunctionId = string.IsNullOrWhiteSpace(functionId) ? "value" : functionId.Trim();
         }
 
         public void AddListener(UnityAction<float> listener)

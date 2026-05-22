@@ -300,7 +300,60 @@ namespace Tests.Devices.Module
         }
 
         [Test]
-        public void LightOutput_AppliesPanAndTiltUsingLocalRotations()
+        public void DirectValueModule_StoresPlannerFunctionIdForExporter()
+        {
+            var root = CreateGameObject("Fixture");
+            var directValue = root.AddComponent<DirectValueModule>();
+
+            directValue.SetPlannerFunctionId("prism");
+
+            Assert.That(directValue.PlannerFunctionId, Is.EqualTo("prism"));
+        }
+
+        [Test]
+        public void LightOutput_MovesPanAndTiltAtConfiguredSpeed()
+        {
+            var root = CreateGameObject("Fixture");
+            var panAxis = CreateGameObject("PanAxis").transform;
+            panAxis.SetParent(root.transform, false);
+
+            var tiltAxis = CreateGameObject("TiltAxis").transform;
+            tiltAxis.SetParent(panAxis, false);
+
+            var lightGo = CreateGameObject("Light");
+            lightGo.transform.SetParent(tiltAxis, false);
+            var light = lightGo.AddComponent<Light>();
+
+            var fixture = root.AddComponent<DmxFixture>();
+            var panTilt = root.AddComponent<PanTiltModule>();
+            var output = root.AddComponent<LightOutput>();
+            output.Configure(light, panAxis, tiltAxis, new Vector2(10f, 60f), new Vector2(-90f, 90f), new Vector2(-45f, 45f), 1f);
+            SetPrivateField(output, typeof(LightOutput), "panSpeedDegPerSecond", 30f);
+            SetPrivateField(output, typeof(LightOutput), "tiltSpeedDegPerSecond", 30f);
+
+            fixture.SetModules(new[]
+            {
+                fixture.CreateEntry(panTilt, 0)
+            });
+            fixture.SetOutputs(new FixtureOutputBase[] { output });
+
+            InitializeFixture(fixture);
+            fixture.DmxUpdate(new byte[] { 255, 255, 0, 0 });
+
+            AssertQuaternionApproximately(panAxis.localRotation, Quaternion.identity, 0.001f);
+            AssertQuaternionApproximately(tiltAxis.localRotation, Quaternion.identity, 0.001f);
+
+            output.Tick(1f);
+
+            var expectedPan = Quaternion.AngleAxis(30f, Vector3.up);
+            var expectedTilt = Quaternion.AngleAxis(-30f, Vector3.right);
+
+            AssertQuaternionApproximately(panAxis.localRotation, expectedPan, 0.001f);
+            AssertQuaternionApproximately(tiltAxis.localRotation, expectedTilt, 0.001f);
+        }
+
+        [Test]
+        public void LightOutput_AppliesPanAndTiltImmediatelyWhenSpeedIsZero()
         {
             var root = CreateGameObject("Fixture");
             var panAxis = CreateGameObject("PanAxis").transform;

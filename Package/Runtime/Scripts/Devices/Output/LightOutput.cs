@@ -65,8 +65,16 @@ namespace ArtNet.Devices.Modular.Output
 
         public override void Apply()
         {
-            _currentPanAngle = GetTargetPanAngle();
-            _currentTiltAngle = GetTargetTiltAngle();
+            if (panSpeedDegPerSecond <= 0f)
+            {
+                _currentPanAngle = GetTargetPanAngle();
+            }
+
+            if (tiltSpeedDegPerSecond <= 0f)
+            {
+                _currentTiltAngle = GetTargetTiltAngle();
+            }
+
             _currentBeamAngle = GetTargetBeamAngle();
 
             ApplyPanTilt();

@@ -9,10 +9,7 @@ Committed sample JSON lives in `Package/Documentation~/ValidationSamples/lightin
 1. Open `Dev/` as the Unity project.
 2. Open the sample scene at `Samples/ArtNet-Unity/0.2.0/Receive Art-Net packet/Scenes/LightingPlannerExportValidation.unity`.
 3. Run `ArtNet/Lighting Planner/Export Validation Scene (Fixed Folder)`.
-4. Confirm that `manifest.json`, `rig.json`, and `intent.json` were written to `Package/Documentation~/ValidationSamples/lighting_planner_export_validation/`.
-
-`timeline.json` is not expected here.
-The validation flow treats it as planner-owned sidecar data rather than part of the exported package contract.
+4. Confirm that `manifest.json`, `rig.json`, `intent.json`, and `timeline.json` were written to `Package/Documentation~/ValidationSamples/lighting_planner_export_validation/`.
 
 The fixed-folder export menu uses `LightingPlannerExportValidationBatch.ExportValidationScene` and is intended for refreshing the committed sample in-place.
 
@@ -22,6 +19,7 @@ Check these points in the exported files:
   - `schemaVersion` is `1.0.0`
   - `rigFile` is `rig.json`
   - `intentFile` is `intent.json`
+  - `timelineFile` is `timeline.json`
   - `packageId` and `rigId` are derived from the scene name
 - `rig.json`
   - contains a fixture type from `profileName: Validation LED Wash RGB Strobe`
@@ -40,5 +38,9 @@ Check these points in the exported files:
   - `schemaVersion` is `1.0.0`
   - `rigId` matches `manifest.json` / `rig.json`
   - default template values are present (`bpm: 120`, empty `sections`)
+- `timeline.json`
+  - `schemaVersion` is `1.0.0`
+  - `metadata.source` is `artnet-unity-export`
+  - `events` and `effects` are present as empty arrays
 
 Additional fixtures may appear in the export if the sample scene already contains other `DmxFixture` objects. For validation, the two fixtures above are the required checkpoints.

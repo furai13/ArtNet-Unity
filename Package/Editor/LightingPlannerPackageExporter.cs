@@ -69,11 +69,13 @@ namespace ArtNet.Editor
             var rig = BuildRigExport(fixtures, fixtureTypeEntries, bindingByFixtureId);
             var manifest = BuildManifest(scene, rig);
             var intent = BuildIntentTemplate(scene, rig);
+            var timeline = BuildTimelineTemplate();
 
             Directory.CreateDirectory(exportFolder);
             WriteJson(Path.Combine(exportFolder, "manifest.json"), manifest);
             WriteJson(Path.Combine(exportFolder, "rig.json"), rig);
             WriteJson(Path.Combine(exportFolder, "intent.json"), intent);
+            WriteJson(Path.Combine(exportFolder, "timeline.json"), timeline);
 
             AssetDatabase.Refresh();
 
@@ -91,7 +93,28 @@ namespace ArtNet.Editor
                 createdAt = DateTimeOffset.Now.ToString("O"),
                 rigFile = "rig.json",
                 intentFile = "intent.json",
+                timelineFile = "timeline.json",
                 rigId = rig.rigId
+            };
+        }
+
+        private static TimelineJson BuildTimelineTemplate()
+        {
+            return new TimelineJson
+            {
+                schemaVersion = SchemaVersion,
+                metadata = new TimelineMetadataJson
+                {
+                    source = "artnet-unity-export",
+                    generator = nameof(LightingPlannerPackageExporter),
+                    generatedAt = DateTimeOffset.Now.ToString("O"),
+                    requiresApproval = true,
+                    approved = false
+                },
+                looks = Array.Empty<LookJson>(),
+                sectionCues = Array.Empty<SectionCueJson>(),
+                events = Array.Empty<TimelineEventJson>(),
+                effects = Array.Empty<TimelineEffectJson>()
             };
         }
 
@@ -316,8 +339,8 @@ namespace ArtNet.Editor
                     case "beam.angle":
                         AddDistinct(capabilities, "BeamAngle");
                         break;
-                    case "gobo.select":
-                    case "gobo.rotate":
+                    case "gobo":
+                    case "gobo.rotation":
                         AddDistinct(capabilities, "Gobo");
                         break;
                     default:
@@ -363,14 +386,14 @@ namespace ArtNet.Editor
                     if (normalizedName.Contains("rotation", StringComparison.Ordinal) ||
                         normalizedName.Contains("rotate", StringComparison.Ordinal))
                     {
-                        return "gobo.rotate";
+                        return "gobo.rotation";
                     }
 
-                    return "gobo.select";
+                    return "gobo";
                 case FunctionChannelModule:
                     return "control";
-                case DirectValueModule:
-                    return "value";
+                case DirectValueModule directValueModule:
+                    return NormalizePlannerFunctionId(directValueModule.PlannerFunctionId);
             }
 
             if (normalizedName.StartsWith("red", StringComparison.Ordinal) ||
@@ -384,6 +407,30 @@ namespace ArtNet.Editor
             }
 
             return $"unknown.{normalizedName}";
+        }
+
+        private static string NormalizePlannerFunctionId(string functionId)
+        {
+            var normalized = NormalizeToken(functionId);
+            return normalized switch
+            {
+                "gobo.select" => "gobo",
+                "goboselect" => "gobo",
+                "gobo.rotate" => "gobo.rotation",
+                "goborotate" => "gobo.rotation",
+                "goborotation" => "gobo.rotation",
+                "beamangle" => "beam.angle",
+                "colorwheel" => "color.wheel",
+                "cyan" => "color.cyan",
+                "magenta" => "color.magenta",
+                "yellow" => "color.yellow",
+                "red" => "color.red",
+                "green" => "color.green",
+                "blue" => "color.blue",
+                "white" => "color.white",
+                "amber" => "color.amber",
+                _ => string.IsNullOrWhiteSpace(normalized) ? "value" : normalized
+            };
         }
 
         private static string MapColorFunction(string normalizedName)
@@ -621,7 +668,106 @@ namespace ArtNet.Editor
             public string createdAt;
             public string rigFile;
             public string intentFile;
+            public string timelineFile;
             public string rigId;
+        }
+
+        [Serializable]
+        private sealed class TimelineJson
+        {
+            public string schemaVersion;
+            public TimelineMetadataJson metadata;
+            public LookJson[] looks;
+            public SectionCueJson[] sectionCues;
+            public TimelineEventJson[] events;
+            public TimelineEffectJson[] effects;
+        }
+
+        [Serializable]
+        private sealed class TimelineMetadataJson
+        {
+            public string source;
+            public string generator;
+            public string generatedAt;
+            public bool requiresApproval;
+            public bool approved;
+        }
+
+        [Serializable]
+        private sealed class LookJson
+        {
+            public string lookId;
+            public string displayName;
+        }
+
+        [Serializable]
+        private sealed class SectionCueJson
+        {
+            public string sectionId;
+            public string lookId;
+            public float fadeInSeconds;
+            public float fadeOutSeconds;
+        }
+
+        [Serializable]
+        private sealed class TimelineEventJson
+        {
+            public string eventId;
+            public string label;
+            public float time;
+            public float duration;
+            public string blend;
+            public int priority;
+            public SelectionJson target;
+            public AttributeValueJson[] attributes;
+        }
+
+        [Serializable]
+        private sealed class TimelineEffectJson
+        {
+            public string effectId;
+            public string label;
+            public string type;
+            public float startTime;
+            public float endTime;
+            public string blend;
+            public int priority;
+            public SelectionJson target;
+            public string[] attributes;
+            public float speedBpm;
+            public float measureBeats;
+            public float phaseFrom;
+            public float phaseTo;
+            public EffectStepJson[] steps;
+        }
+
+        [Serializable]
+        private sealed class EffectStepJson
+        {
+            public float width;
+            public float transition;
+            public float accel;
+            public float decel;
+            public AttributeValueJson[] values;
+        }
+
+        [Serializable]
+        private sealed class AttributeValueJson
+        {
+            public string functionId;
+            public float value;
+        }
+
+        [Serializable]
+        private sealed class SelectionJson
+        {
+            public string[] fixtureIds;
+            public string[] roles;
+            public string[] capabilities;
+            public string[] tags;
+            public string[] exclusionTags;
+            public string fixtureTypeId;
+            public string nameContains;
         }
 
         [Serializable]

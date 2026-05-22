@@ -146,12 +146,23 @@ Lighting Planner Package は、以下の責務分離を前提としている。
 - `color.white`
 - `color.amber`
 - `color.uv`
+- `color.cyan`
+- `color.magenta`
+- `color.yellow`
 - `color.wheel`
-- `gobo.select`
-- `gobo.rotate`
+- `gobo`
+- `gobo.rotation`
+- `iris`
+- `frost`
+- `prism`
+- `speed`
 - `control`
 - `value`
 - `unknown.*`
+
+`DirectValueModule` は、専用 Unity モジュールを持たない fixture 固有チャンネルに対して Planner 向けの `functionId` を export できる。
+`iris`, `frost`, `prism`, `speed` や独自の `value` チャンネルのような 0..1 正規化制御に使う。
+未設定の場合は後方互換のため `value` として export される。
 
 #### fixtureTypeId の生成方針
 
