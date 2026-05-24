@@ -46,9 +46,10 @@ namespace ArtNet.Devices
                 return;
             }
 
+            var isFirstReceivedDmx = !HasReceivedDmx;
             _lastReceivedRealtimeSinceStartup = Time.realtimeSinceStartup;
 
-            if (dmx.SequenceEqual(DmxData.AsSpan(0, ChannelNumber))) return;
+            if (!isFirstReceivedDmx && dmx.SequenceEqual(DmxData.AsSpan(0, ChannelNumber))) return;
             dmx[..ChannelNumber].CopyTo(DmxData);
             //Debug.Log($"DMX data updated to {dmx.Length} bytes. Channel number: {ChannelNumber}");
 

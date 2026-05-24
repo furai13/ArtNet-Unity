@@ -52,6 +52,29 @@ namespace Tests.Devices.Module
         }
 
         [Test]
+        public void DmxUpdate_AppliesInitialZeroValues()
+        {
+            var root = CreateGameObject("Fixture");
+            var fixture = root.AddComponent<DmxFixture>();
+            var color = root.AddComponent<ColorModule>();
+            var dimmer = root.AddComponent<DimmerModule>();
+
+            fixture.SetModules(new[]
+            {
+                fixture.CreateEntry(color, 0),
+                fixture.CreateEntry(dimmer, 3)
+            });
+
+            InitializeFixture(fixture);
+            fixture.DmxUpdate(new byte[] { 0, 0, 0, 0 });
+
+            Assert.That(fixture.State.Color.r, Is.EqualTo(0f).Within(0.001f));
+            Assert.That(fixture.State.Color.g, Is.EqualTo(0f).Within(0.001f));
+            Assert.That(fixture.State.Color.b, Is.EqualTo(0f).Within(0.001f));
+            Assert.That(fixture.State.Dimmer, Is.EqualTo(0f).Within(0.001f));
+        }
+
+        [Test]
         public void ColorModules_CanMultiplyInsteadOfOverwrite()
         {
             var root = CreateGameObject("Fixture");
